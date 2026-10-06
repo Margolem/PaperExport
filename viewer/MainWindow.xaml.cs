@@ -74,10 +74,12 @@ public partial class MainWindow : Window
             EmptyMessage.Visibility = Visibility.Collapsed;
             EntityName.Text = loaded.Manifest.Name;
             EntityId.Text = loaded.Manifest.Id;
-            EntityStats.Text = $"Health\t{loaded.Entity.Stats.MaxHealth:g}\n" +
+            EntityStats.Text = "Paper 1.21–26.3\n" +
+                $"Health\t{loaded.Entity.Stats.MaxHealth:g}\n" +
                 $"Behavior\t{loaded.Entity.Behavior}\n" +
                 $"Base\t{loaded.Entity.BaseEntity}\n" +
                 $"Parts\t{loaded.DisplayNodes}\n" +
+                $"Hitboxes\t{loaded.Model.Hitboxes.Count}\n" +
                 $"Textures\t{loaded.Manifest.Textures.Count}\n" +
                 $"Format\tv{loaded.Manifest.FormatVersion}";
             FillHierarchy(loaded);
@@ -305,12 +307,6 @@ public partial class MainWindow : Window
     private void Grid_Checked(object sender, RoutedEventArgs e) => scene.SetGrid(GridCheck.IsChecked == true);
     private void Hitbox_Checked(object sender, RoutedEventArgs e) => scene.SetHitbox(HitboxCheck.IsChecked == true);
     private void Pivots_Checked(object sender, RoutedEventArgs e) => scene.SetPivots(PivotsCheck.IsChecked == true);
-    private void Background_Checked(object sender, RoutedEventArgs e) =>
-        ViewportHost.Background = WhiteCheck.IsChecked == true ? Brushes.White : new SolidColorBrush(Color.FromRgb(248, 248, 248));
-    private void Grid_Click(object sender, RoutedEventArgs e) => GridCheck.IsChecked = (sender as MenuItem)?.IsChecked;
-    private void Hitbox_Click(object sender, RoutedEventArgs e) => HitboxCheck.IsChecked = (sender as MenuItem)?.IsChecked;
-    private void Pivots_Click(object sender, RoutedEventArgs e) => PivotsCheck.IsChecked = (sender as MenuItem)?.IsChecked;
-    private void Background_Click(object sender, RoutedEventArgs e) => WhiteCheck.IsChecked = (sender as MenuItem)?.IsChecked;
     private sealed record AnimationItem(PeAnimation Animation)
     {
         public override string ToString() => $"{Animation.Name} · {Animation.Length:0.00}s";

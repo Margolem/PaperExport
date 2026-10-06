@@ -9,9 +9,11 @@ backslashes, NUL and colon characters, encrypted entries, and executable
 extensions. The format is data only; readers must never evaluate content.
 
 Version 1 packages are portable across supported Paper **1.21.x–26.x**
-servers. The fixed `minecraft_version` and `paper_version` values of
-`1.21.11` identify the bundled asset compilation baseline; they do not limit
-the server version. The runtime rebuilds a server-specific pack on load.
+servers. New exporters write `1.21-26.3` in `minecraft_version` and
+`paper_version`. Readers also accept the older `1.21.11` marker for existing
+packages. Both fields must match. The runtime rebuilds a server-specific pack
+on load; the bundled resource-pack fragment uses 1.21.11 as its compilation
+baseline.
 Readers must reject a different `format_version`; they may report older or
 newer versions distinctly. The JSON Schemas under `schemas/` describe the
 fields; the cross-field rules below are also required.
@@ -46,7 +48,7 @@ actual output sizes afterward. It should verify the ZIP CRC.
   "format":"paperexport", "format_version":1,
   "id":"example:creature", "name":"Example Creature",
   "author":"PaperExport contributors", "description":"Example entity",
-  "minecraft_version":"1.21.11", "paper_version":"1.21.11",
+  "minecraft_version":"1.21-26.3", "paper_version":"1.21-26.3",
   "exporter_version":"1.0.0",
   "model":"model/model.json", "entity":"entity/entity.json",
   "animations":{"idle":"animations/idle.json"},
@@ -174,7 +176,8 @@ The base entity still supplies the actual combat AI.
 
 The ZIP contains a complete fragment under `resourcepack/`, including
 `pack.mcmeta` with `min_format` and `max_format` `[75,0]`. The Paper runtime
-replaces that metadata for the running server. For entity
+replaces that metadata for the running server and adds the PaperExport
+`pack.png` icon. For entity
 `ns:creature`, bone `head`, and texture `skin`, it contains:
 
 ```text

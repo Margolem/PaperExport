@@ -9,7 +9,7 @@ export interface TextureRef { path: string; width: number; height: number; }
 export interface SoundRef { path: string; }
 export interface Manifest {
   format: 'paperexport'; format_version: 1; id: string; name: string; author: string;
-  description: string; minecraft_version: '1.21.11'; paper_version: '1.21.11';
+  description: string; minecraft_version: '1.21.11' | '1.21-26.3'; paper_version: '1.21.11' | '1.21-26.3';
   exporter_version: string; model: string; entity: string;
   animations: Record<string, string>; textures: Record<string, TextureRef>; sounds?: Record<string, SoundRef>;
   resource_pack: 'resourcepack/';

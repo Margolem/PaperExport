@@ -88,7 +88,12 @@ export async function writeArchive(pkg: Omit<PaperPackage,'files'> & {files:Map<
   for(const [name,ref] of Object.entries(pkg.manifest.textures)) {const data=all.get(ref.path);if(!data)throw new PackageError(`Missing texture: ${name}`);const [w,h]=pngDimensions(data);if(w!==ref.width||h!==ref.height)throw new PackageError(`Texture dimensions differ: ${name}`);}
   for(const [name,ref] of Object.entries(pkg.manifest.sounds??{})){const data=all.get(ref.path);if(!data||data.length<32||data.length>8*1024*1024||String.fromCharCode(...data.subarray(0,4))!=='OggS')throw new PackageError(`Invalid or missing Ogg sound: ${name}`);}
   if(all.size>MAX.files)throw new PackageError('Too many files');let total=0;
-  for(const [path,data] of all) {if(!safePath(path)||!allowedEntry(path)||data.length>MAX.file)throw new PackageError(`Unsafe path or oversized entry: ${path}`);total+=data.length;zip.file(path,data,{binary:true,compression:'DEFLATE'});}
+  const date=new Date(1980,0,1,0,0,0);
+  for(const [path,data] of [...all].sort(([a],[b])=>a<b?-1:a>b?1:0)) {
+    if(!safePath(path)||!allowedEntry(path)||data.length>MAX.file)throw new PackageError(`Unsafe path or oversized entry: ${path}`);
+    total+=data.length;
+    zip.file(path,data,{binary:true,compression:'DEFLATE',date,createFolders:false});
+  }
   if(total>MAX.expanded)throw new PackageError('Expanded archive too large');
   const out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
   preflightArchive(out);return out;

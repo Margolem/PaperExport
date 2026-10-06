@@ -100,6 +100,7 @@ public class FormatAndRigTest {
             var result=new PaperResourcePackBuilder().build(List.of(d),output,PaperVersion.of("1.21.1"));
             assertEquals(6,result.legacyModelData().size());
             try(java.util.zip.ZipFile zip=new java.util.zip.ZipFile(output.toFile())){
+                assertNotNull(zip.getEntry("pack.png"));
                 assertNotNull(zip.getEntry("assets/minecraft/models/item/paper.json"));
                 assertNull(zip.getEntry("assets/fixture/items/paperexport/rig/head.json"));
                 String paper=new String(zip.getInputStream(zip.getEntry("assets/minecraft/models/item/paper.json")).readAllBytes());

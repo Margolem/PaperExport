@@ -1,5 +1,7 @@
 # PaperExport
 
+![PaperExport logo](assets/paperexport.png)
+
 PaperExport is an independent pipeline for modeled Paper entities
 that render on unmodified Minecraft Java clients with a server resource pack.
 It is **not affiliated with Mojang Studios or PaperMC**. The repository has a
@@ -26,6 +28,7 @@ No client mod is required.
   PaperExport service API and hitbox event for other server plugins.
 * Native C# WPF viewer with orbit, zoom, pan, hierarchy, textures, animation
   playback, hitbox/pivots, and package inspection. It uses no HTML or Electron.
+* One PaperExport logo across the viewer, Blockbench plugin, and server pack.
 
 ## Requirements
 
@@ -39,7 +42,8 @@ No client mod is required.
 
 ## Installing the Blockbench plugin
 
-Install [paperexport.js](dist/paperexport.js) as a local
+Keep [paperexport.js](https://github.com/Margolem/PaperExport/releases/download/v1.0.0/paperexport.js) and [icon.png](https://github.com/Margolem/PaperExport/releases/download/v1.0.0/icon.png) in the
+same folder, then install `paperexport.js` as a local
 Blockbench plugin using **File → Plugins → Load Plugin from File**. In Blockbench,
 choose **File → New → PaperMC Custom Entity**. The Paper Entity panel appears
 on the right.
@@ -70,7 +74,7 @@ It combines cubes per bone and removes redundant animation keys. See the
 
 ## Installing PaperExport Runtime
 
-1. Copy [PaperExport-Paper-1.0.0.jar](dist/PaperExport-Paper-1.0.0.jar) to
+1. Copy [PaperExport-Paper-1.0.0.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.0/PaperExport-Paper-1.0.0.jar) to
    `plugins/` on a supported Paper server. The same JAR works across the range.
 2. Start once. PaperExport creates `plugins/PaperExport/entities/`,
    `generated/`, `resourcepack/`, `cache/`, `logs/`, and `config.yml`.
@@ -99,7 +103,7 @@ should be respawned when models change.
 
 Run `dotnet run --project viewer/PaperExport.Viewer.csproj -- path/to/mob.paperexport`
 for development. `build-all.bat` publishes a self-contained Windows executable
-at [dist/PaperExport-Viewer-Windows.exe](dist/PaperExport-Viewer-Windows.exe).
+at [PaperExport-Viewer-Windows.exe](https://github.com/Margolem/PaperExport/releases/download/v1.0.0/PaperExport-Viewer-Windows.exe).
 Open a `.paperexport` through File → Open, drag it onto the window, or pass
 its path as an argument. To add the viewer to Windows **Open with**, run
 `rtk powershell -NoProfile -File viewer/register-file-association.ps1`.

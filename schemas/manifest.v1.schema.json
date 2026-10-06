@@ -7,7 +7,7 @@
     "format":{"const":"paperexport"},"format_version":{"const":1},
     "id":{"type":"string","pattern":"^[a-z0-9_.-]+:[a-z0-9_./-]+$","maxLength":240},
     "name":{"type":"string","maxLength":256},"author":{"type":"string","maxLength":256},"description":{"type":"string","maxLength":256},
-    "minecraft_version":{"const":"1.21.11"},"paper_version":{"const":"1.21.11"},"exporter_version":{"type":"string","maxLength":256},
+    "minecraft_version":{"enum":["1.21.11","1.21-26.3"]},"paper_version":{"enum":["1.21.11","1.21-26.3"]},"exporter_version":{"type":"string","maxLength":256},
     "model":{"const":"model/model.json"},"entity":{"const":"entity/entity.json"},"resource_pack":{"const":"resourcepack/"},
     "animations":{"type":"object","propertyNames":{"pattern":"^[a-z0-9_.-]+$"},"additionalProperties":{"type":"string","pattern":"^animations/[a-z0-9_.-]+\\.json$"}},
     "textures":{"type":"object","propertyNames":{"pattern":"^[a-z0-9_.-]+$"},"additionalProperties":{"type":"object","additionalProperties":false,"required":["path","width","height"],"properties":{"path":{"type":"string","pattern":"^textures/[a-z0-9_.-]+\\.png$"},"width":{"type":"integer","minimum":1,"maximum":2048},"height":{"type":"integer","minimum":1,"maximum":2048}}}},

@@ -193,8 +193,9 @@ public static class PackageReader
             throw new InvalidDataException($"Unsupported PaperExport format version: {manifest.FormatVersion}");
         if (!IdPattern.IsMatch(manifest.Id) || manifest.Id.Contains("..") || manifest.Id.Contains("//"))
             throw new InvalidDataException("Invalid namespaced entity ID.");
-        if (manifest.MinecraftVersion != "1.21.11" || manifest.PaperVersion != "1.21.11")
-            throw new InvalidDataException("Package must target Minecraft/Paper 1.21.11.");
+        if (manifest.MinecraftVersion != manifest.PaperVersion ||
+            manifest.MinecraftVersion is not ("1.21.11" or "1.21-26.3"))
+            throw new InvalidDataException("Unsupported Minecraft/Paper compatibility marker.");
         if (manifest.Model != "model/model.json" || manifest.Entity != "entity/entity.json" || manifest.ResourcePack != "resourcepack/")
             throw new InvalidDataException("Invalid fixed package paths.");
         var model = ReadJson<PeModel>(manifest.Model);

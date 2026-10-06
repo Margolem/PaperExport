@@ -2,10 +2,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import JSZip from 'jszip';
-import {readArchive,preflightArchive,PackageError,sample,hierarchy,compileResourcePack,simplifyKeys} from '../dist/index.js';
+import {readArchive,preflightArchive,PackageError,sample,hierarchy,compileResourcePack,simplifyKeys,validateManifest} from '../dist/index.js';
 
 const fixture=()=>readFile('../tests/fixtures/minimal.paperexport');
 test('fixture roundtrip reads bones, hitboxes, textures, and animations',async()=>{const p=await readArchive(await fixture());assert.equal(p.model.bones.length,6);assert.equal(p.model.hitboxes.length,2);assert.equal(Object.keys(p.animations).length,5);assert.equal(p.files.get('textures/skin.png')[0],137);});
+test('portable and older compatibility markers are accepted',async()=>{const p=await readArchive(await fixture());assert.equal(p.manifest.paper_version,'1.21-26.3');validateManifest({...p.manifest,minecraft_version:'1.21.11',paper_version:'1.21.11'});});
 test('bad ZIP is rejected',()=>assert.throws(()=>preflightArchive(new Uint8Array([1,2,3])),PackageError));
 test('ZIP traversal is rejected before decompression',async()=>{const z=new JSZip();z.file('manifest.json','{}');z.file('safe.txt','x');const b=await z.generateAsync({type:'uint8array'});const needle=new TextEncoder().encode('safe.txt');for(let i=0;i<b.length-needle.length;i++)if(needle.every((v,j)=>b[i+j]===v)&&b[i-46]===0x50){b.set(new TextEncoder().encode('../x.txt'),i);break;}assert.throws(()=>preflightArchive(b),PackageError);});
 test('missing texture is reported',async()=>{const original=await readArchive(await fixture());const z=new JSZip();for(const [p,b] of original.files)if(p!=='textures/skin.png')z.file(p,b);const bytes=await z.generateAsync({type:'uint8array'});await assert.rejects(()=>readArchive(bytes),/Missing texture/);});

@@ -1,7 +1,8 @@
 # PaperExport Blockbench plugin
 
 Build with `npm install` at the repository root and `npm run build -w blockbench-plugin`.
-Install `dist/paperexport.js` as a local Blockbench plugin. The filename must
+Keep `dist/paperexport.js` and `dist/icon.png` together when installing the
+local Blockbench plugin. The JavaScript filename must
 remain `paperexport.js` to match Blockbench's plugin ID. Choose **File → New →
 PaperMC Custom Entity**, create groups and cubes, set the Paper Entity panel, then
 use **File → Export → Export Paper Entity**.

@@ -2,6 +2,7 @@ import {writeArchive,PackageError} from '@paperexport/shared';
 import {captureProject} from './convert.js';
 import {openPackage} from './importer.js';
 import {state} from './state.js';
+import logo from '../../assets/paperexport.png';
 
 let format:any,codec:any,panel:any;const actions:any[]=[];
 const thumbnails=new Map<string,Uint8Array>();
@@ -17,9 +18,9 @@ function importSound(component:any):void {const input=document.createElement('in
 function addAction(id:string,name:string,icon:string,click:()=>void):void {const a=new Action(id,{name,icon,condition:()=>Format?.id==='paperexport',click});actions.push(a);MenuBar.addAction(a,'file.export');}
 function addPanel():void {
   panel=new Panel('paper_entity',{name:'Paper Entity',icon:'settings',default_position:'right',condition:()=>Format?.id==='paperexport',component:{
-    data(){return {s:state()};},computed:{validId(){return /^[a-z0-9_.-]+$/.test(this.s.namespace)&&/^[a-z0-9_.-]+$/.test(this.s.entityId);},soundNames(){return Object.keys(this.s.sounds);},animationNames(){return (Animation.all as any[]).map(a=>String(a.name).toLowerCase().replace(/[^a-z0-9_.-]+/g,'_'));}},
+    data(){return {s:state(),logo};},computed:{validId(){return /^[a-z0-9_.-]+$/.test(this.s.namespace)&&/^[a-z0-9_.-]+$/.test(this.s.entityId);},soundNames(){return Object.keys(this.s.sounds);},animationNames(){return (Animation.all as any[]).map(a=>String(a.name).toLowerCase().replace(/[^a-z0-9_.-]+/g,'_'));}},
     template:`<div class="paperexport_panel" style="padding:12px;display:grid;gap:8px">
-      <strong>Paper Entity</strong><label>Namespace <input v-model="s.namespace" /></label><label>Entity ID <input v-model="s.entityId" /></label>
+      <div style="display:flex;align-items:center;gap:8px"><img :src="logo" width="32" height="32" alt="PaperExport"/><strong>Paper Entity</strong></div><label>Namespace <input v-model="s.namespace" /></label><label>Entity ID <input v-model="s.entityId" /></label>
       <small :style="{color:validId?'#66cda8':'#f08d82'}">{{validId?s.namespace+':'+s.entityId:'Use lowercase letters, digits, _, . or -'}}</small><label>Name <input v-model="s.name" /></label><label>Author <input v-model="s.author" /></label>
       <label>Description <input v-model="s.description" /></label><label>Base entity <select v-model="s.entity.base_entity"><option v-for="x in ['ZOMBIE','SKELETON','HUSK','STRAY','PIG','COW','ARMOR_STAND','INTERACTION']">{{x}}</option></select></label>
       <label>Behavior <select v-model="s.entity.behavior"><option v-for="x in ['passive','neutral','hostile','stationary','flying','swimming','boss','npc','custom']">{{x}}</option></select></label>
@@ -54,7 +55,7 @@ function addPanel():void {
     </div>`,methods:{validate:validation,exportIt:exportFile,importSound(){importSound(this);},removeSound(name:string){const next={...this.s.sounds};delete next[name];this.s.sounds=next;},addPhase(){const phases=this.s.entity.boss.phases;this.s.entity.boss.phases=[...phases,{below_health:phases.length?Math.max(.01,Number((phases[phases.length-1].below_health-.2).toFixed(2))):.5,animation:'',sound:''}];},removePhase(index:number){this.s.entity.boss.phases=this.s.entity.boss.phases.filter((_:unknown,i:number)=>i!==index);}}
   }});
 }
-Plugin.register('paperexport',{title:'PaperExport',author:'PaperExport contributors',description:'Create vanilla-client custom entities for Paper 1.21.x–26.x',icon:'view_in_ar',version:'1.0.0',min_version:'4.8.0',variant:'both',onload(){
+Plugin.register('paperexport',{title:'PaperExport',author:'PaperExport contributors',description:'Create vanilla-client custom entities for Paper 1.21.x–26.x',icon:'icon.png',version:'1.0.0',min_version:'4.8.0',variant:'both',onload(){
   codec=new Codec('paperexport',{name:'PaperExport package',extension:'paperexport',remember:false,compile:captureProject,parse:(data:any)=>{void openPackage(new Uint8Array(data),format);},export:()=>{void exportFile();}});
   format=new ModelFormat('paperexport',{name:'PaperMC Custom Entity',description:'Animated display-entity model for Paper 1.21.x–26.x',icon:'view_in_ar',category:'minecraft',target:['Minecraft: Java Edition'],show_on_start_screen:true,codec,bone_rig:true,rotate_cubes:false,meshes:false,animation_mode:true,animation_files:false,optional_box_uv:true,uv_rotation:true,single_texture:false});codec.format=format;
   addPanel();addAction('paperexport_export','Export Paper Entity (.paperexport)','file_download',()=>{void exportFile();});

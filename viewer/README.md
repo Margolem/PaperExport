@@ -4,6 +4,10 @@ This is a native Windows desktop application written in C# with WPF. It uses
 Windows controls and WPF's 3D viewport. It has no HTML, browser process, or
 Electron runtime.
 
+The Model tab shows the rig, animation playback, textures, sounds, and
+hitboxes. The Files tab lists package contents. Both older 1.21.11 packages
+and current portable packages open in the same viewer.
+
 Build and run:
 
 ```powershell

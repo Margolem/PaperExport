@@ -16,7 +16,8 @@ export function validateManifest(m: unknown): asserts m is Manifest {
   if (!obj(m) || m.format !== 'paperexport') fail('manifest.json: format must be paperexport');
   if (m.format_version !== 1) fail(`manifest.json: unsupported format_version ${String(m.format_version)}`);
   if (typeof m.id !== 'string' || !ID.test(m.id) || m.id.includes('//') || m.id.includes('..')) fail('manifest.json: invalid namespaced id');
-  if (m.minecraft_version !== '1.21.11' || m.paper_version !== '1.21.11') fail('manifest.json: requires Minecraft/Paper 1.21.11');
+  if (m.minecraft_version !== m.paper_version || !['1.21.11','1.21-26.3'].includes(m.minecraft_version as string))
+    fail('manifest.json: unsupported Minecraft/Paper compatibility marker');
   for (const k of ['name','author','description','exporter_version'] as const) if (typeof m[k] !== 'string' || m[k].length > 256) fail(`manifest.json: invalid ${k}`);
   if (m.model !== 'model/model.json' || m.entity !== 'entity/entity.json' || m.resource_pack !== 'resourcepack/') fail('manifest.json: invalid fixed entry path');
   if (!obj(m.animations) || !obj(m.textures)) fail('manifest.json: animations and textures must be maps');

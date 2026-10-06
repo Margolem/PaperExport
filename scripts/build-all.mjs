@@ -6,7 +6,6 @@ function run(command,args,cwd=process.cwd()){return new Promise((resolve,reject)
 await run('npm',['ci']);
 await run('npm',['test']);
 await run('npm',['run','build']);
-await run('node',['scripts/make-icon.mjs']);
 await run(win?'gradlew.bat':'./gradlew',['test','jar','apiJar','--no-daemon'],join(process.cwd(),'paper-runtime'));
 await mkdir('dist',{recursive:true});
 await rm('dist/test_dummy.paperexport',{force:true});
@@ -18,5 +17,5 @@ if(win){
   await copyFile('viewer/release-build/PaperExport Viewer.exe','dist/PaperExport-Viewer-Windows.exe');
   for(const old of ['PaperExport Viewer 1.0.0.exe','PaperExport Viewer Setup 1.0.0.exe'])await rm(join('dist',old),{force:true});
 }
-console.log('\nArtifacts: dist/PaperExport-Blockbench.js, dist/PaperExport-Paper-1.0.0.jar, dist/PaperExport-API-1.0.0.jar');
+console.log('\nArtifacts: dist/paperexport.js + dist/icon.png, dist/PaperExport-Paper-1.0.0.jar, dist/PaperExport-API-1.0.0.jar');
 if(win)console.log('Native C# viewer: dist/PaperExport-Viewer-Windows.exe');

@@ -9,8 +9,16 @@ var fixture = Path.Combine(folder.FullName, "tests", "fixtures", "minimal.papere
 var loaded = PackageReader.Load(fixture);
 if (loaded.Manifest.Id != "fixture:rig" || loaded.Model.Bones.Count != 6 || loaded.Model.Hitboxes.Count != 2 ||
     loaded.Animations.Count != 5 || loaded.DisplayNodes != 6 ||
-    loaded.Manifest.Sounds.Count != 1 || loaded.Entity.Boss?.Enabled != true)
+    loaded.Manifest.Sounds.Count != 1 || loaded.Entity.Boss?.Enabled != true ||
+    loaded.Manifest.PaperVersion != "1.21-26.3")
     throw new Exception("Native viewer did not load the complete test package.");
+foreach (var path in args)
+{
+    var sample = PackageReader.Load(path);
+    if (sample.Manifest.PaperVersion != "1.21-26.3" || sample.Model.Hitboxes.Count == 0)
+        throw new Exception($"Native viewer did not load current package fields: {path}");
+    Console.WriteLine($"Native viewer read {sample.Manifest.Id}: {sample.Model.Hitboxes.Count} hitboxes.");
+}
 var attack = Path.Combine(Path.GetTempPath(), $"paperexport-viewer-{Guid.NewGuid():N}.paperexport");
 try
 {

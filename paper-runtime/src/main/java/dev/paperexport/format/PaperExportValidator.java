@@ -20,7 +20,9 @@ public final class PaperExportValidator {
         Manifest m=d.manifest;require(m!=null&&"paperexport".equals(m.format),"manifest.json: invalid format");
         require(m.format_version==1,"manifest.json: unsupported format version "+m.format_version);
         require(m.id!=null&&ID.matcher(m.id).matches()&&!m.id.contains("//")&&!m.id.contains(".."),"manifest.json: invalid ID");
-        require("1.21.11".equals(m.minecraft_version)&&"1.21.11".equals(m.paper_version),"manifest.json: requires 1.21.11");
+        require(m.minecraft_version!=null&&m.minecraft_version.equals(m.paper_version)&&
+            ("1.21.11".equals(m.minecraft_version)||"1.21-26.3".equals(m.minecraft_version)),
+            "manifest.json: unsupported Minecraft/Paper compatibility marker");
         require("model/model.json".equals(m.model)&&"entity/entity.json".equals(m.entity)&&"resourcepack/".equals(m.resource_pack),"manifest.json: invalid fixed paths");
         require(m.name!=null&&m.name.length()<=256&&m.author!=null&&m.description!=null,"manifest.json: invalid metadata");
         require(m.textures!=null&&m.animations!=null,"manifest.json: missing textures or animations");

@@ -16,3 +16,7 @@ declare const Animation: any;
 declare const Outliner: any;
 declare const Canvas: any;
 declare const Screencam: any;
+declare module '*.png' {
+  const dataUrl: string;
+  export default dataUrl;
+}

@@ -25,6 +25,10 @@ public final class PaperResourcePackBuilder {
         Map<String,JsonObject> soundMaps=new TreeMap<>();
         Map<String,Integer> legacyModelData=new TreeMap<>();
         assets.put("pack.mcmeta",version.packMetadata());
+        try(var logo=PaperResourcePackBuilder.class.getResourceAsStream("/pack.png")){
+            if(logo==null)throw new IOException("PaperExport pack logo is missing from the plugin JAR");
+            assets.put("pack.png",logo.readAllBytes());
+        }
         JsonArray overrides=new JsonArray();int nextModelData=100000;
         for(PaperEntityDefinition d:definitions.stream().sorted(java.util.Comparator.comparing(value->value.manifest.id)).toList()){
             String[] parts=d.manifest.id.split(":",2);
