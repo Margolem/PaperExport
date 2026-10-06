@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paperexport.dev/schemas/entity.v1.schema.json",
+  "title": "PaperExport entity v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["base_entity", "behavior", "stats", "hitbox"],
+  "properties": {
+    "base_entity": {"enum": ["ZOMBIE", "SKELETON", "HUSK", "STRAY", "PIG", "COW", "ARMOR_STAND", "INTERACTION"]},
+    "behavior": {"enum": ["passive", "neutral", "hostile", "stationary", "flying", "swimming", "boss", "npc", "custom"]},
+    "stats": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_health", "movement_speed", "attack_damage", "follow_range", "knockback_resistance", "armor", "armor_toughness", "scale", "gravity", "invulnerable", "silent", "persistent"],
+      "properties": {
+        "max_health": {"type":"number","minimum":1,"maximum":2048},
+        "movement_speed": {"type":"number","minimum":0,"maximum":2},
+        "attack_damage": {"type":"number","minimum":0,"maximum":2048},
+        "follow_range": {"type":"number","minimum":0,"maximum":256},
+        "knockback_resistance": {"type":"number","minimum":0,"maximum":1},
+        "armor": {"type":"number","minimum":0,"maximum":30},
+        "armor_toughness": {"type":"number","minimum":0,"maximum":20},
+        "scale": {"type":"number","minimum":0.01,"maximum":16},
+        "gravity": {"type":"boolean"},
+        "invulnerable": {"type":"boolean"},
+        "silent": {"type":"boolean"},
+        "persistent": {"type":"boolean"}
+      }
+    },
+    "hitbox": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height", "vertical_offset", "interaction_range"],
+      "properties": {
+        "width": {"type":"number","minimum":0.05,"maximum":32},
+        "height": {"type":"number","minimum":0.05,"maximum":32},
+        "vertical_offset": {"type":"number","minimum":-16,"maximum":16},
+        "interaction_range": {"type":"number","minimum":0,"maximum":64}
+      }
+    },
+    "sound_cues": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "spawn": {"type":"string","pattern":"^[a-z0-9_.-]+$"},
+        "ambient": {"type":"string","pattern":"^[a-z0-9_.-]+$"},
+        "attack": {"type":"string","pattern":"^[a-z0-9_.-]+$"},
+        "hurt": {"type":"string","pattern":"^[a-z0-9_.-]+$"},
+        "death": {"type":"string","pattern":"^[a-z0-9_.-]+$"}
+      }
+    },
+    "boss": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled", "title", "bar_color", "bar_style", "range", "phases"],
+      "properties": {
+        "enabled": {"type":"boolean"},
+        "title": {"type":"string","maxLength":128},
+        "bar_color": {"enum":["PINK","BLUE","RED","GREEN","YELLOW","PURPLE","WHITE"]},
+        "bar_style": {"enum":["SOLID","SEGMENTED_6","SEGMENTED_10","SEGMENTED_12","SEGMENTED_20"]},
+        "range": {"type":"number","minimum":4,"maximum":128},
+        "phases": {
+          "type":"array","maxItems":8,
+          "items": {
+            "type":"object","additionalProperties":false,"required":["below_health"],
+            "properties": {
+              "below_health":{"type":"number","minimum":0.01,"maximum":0.99},
+              "animation":{"type":"string","pattern":"^[a-z0-9_.-]+$"},
+              "sound":{"type":"string","pattern":"^[a-z0-9_.-]+$"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

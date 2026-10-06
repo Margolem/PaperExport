@@ -1,0 +1,9 @@
+resource-pack:
+  mode: external
+  url: ''
+  required: false
+animation:
+  update-ticks: 2
+  far-distance: 48
+events:
+  allow-package-damage: false

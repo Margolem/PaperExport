@@ -1,0 +1,10 @@
+{
+  "name": "@paperexport/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {"build": "tsc -p tsconfig.json", "test": "node --test test/*.test.mjs"},
+  "dependencies": {"jszip": "^3.10.1"},
+  "devDependencies": {"@types/jszip": "^3.4.1", "@types/node": "^22.15.0"}
+}
