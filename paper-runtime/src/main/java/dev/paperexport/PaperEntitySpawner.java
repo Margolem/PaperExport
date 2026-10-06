@@ -38,7 +38,7 @@ public final class PaperEntitySpawner {
         public double ambientTime;
         public float headYaw,headPitch;
         Instance(Entity controller,PaperEntityDefinition definition,UUID id,Map<String,org.bukkit.entity.ItemDisplay> parts){
-            this.controller=controller;this.definition=definition;this.id=id;this.parts=parts;this.animation=new PaperAnimationController(definition);this.lastLocation=controller.getLocation();this.lastYaw=controller.getLocation().getYaw();
+            this.controller=controller;this.definition=definition;this.id=id;this.parts=parts;this.animation=new PaperAnimationController(definition);this.lastLocation=controller.getLocation();this.lastYaw=controller instanceof LivingEntity living?living.getBodyYaw():lastLocation.getYaw();
             var boss=definition.entity.boss;
             if(boss!=null&&boss.enabled)bossBar=Bukkit.createBossBar(boss.title.isBlank()?definition.manifest.name:boss.title,BarColor.valueOf(boss.bar_color),BarStyle.valueOf(boss.bar_style));
         }

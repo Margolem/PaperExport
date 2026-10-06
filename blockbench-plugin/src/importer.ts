@@ -1,9 +1,11 @@
-import {readArchive,type PaperPackage} from '@paperexport/shared';
+import {modelToBlockbenchUv,readArchive,type PaperPackage} from '@paperexport/shared';
 import {setState} from './state.js';
 
 function dataUrl(bytes:Uint8Array):string {let s='';for(const b of bytes)s+=String.fromCharCode(b);return `data:image/png;base64,${btoa(s)}`;}
 export async function openPackage(data:Uint8Array,format:any):Promise<void> {
   const pkg:PaperPackage=await readArchive(data);format.new();
+  Project.texture_width=pkg.model.texture_size[0];
+  Project.texture_height=pkg.model.texture_size[1];
   const [namespace,entityId]=pkg.manifest.id.split(':');
   const sounds:Record<string,Uint8Array>={};for(const [name,ref] of Object.entries(pkg.manifest.sounds??{}))sounds[name]=pkg.files.get(ref.path)!;
   setState({namespace,entityId,name:pkg.manifest.name,author:pkg.manifest.author,description:pkg.manifest.description,entity:{...pkg.entity,sound_cues:pkg.entity.sound_cues??{},boss:pkg.entity.boss??{enabled:false,title:'',bar_color:'PURPLE',bar_style:'SOLID',range:48,phases:[]}},sounds});
@@ -16,8 +18,11 @@ export async function openPackage(data:Uint8Array,format:any):Promise<void> {
   for(const bone of pkg.model.bones){const g=new Group({name:bone.name,origin:bone.pivot,rotation:bone.rotation});groups.set(bone.id,g);}
   for(const bone of pkg.model.bones){const g=groups.get(bone.id);g.addTo(bone.parent?groups.get(bone.parent):undefined).init();}
   for(const bone of pkg.model.bones)for(const cube of bone.cubes){
-    const faces:any={};for(const [side,face] of Object.entries(cube.faces))if(face){const ref=pkg.manifest.textures[face.texture];faces[side]={texture:textures.get(face.texture).uuid,uv:[face.uv[0]*ref.width/16,face.uv[1]*ref.height/16,face.uv[2]*ref.width/16,face.uv[3]*ref.height/16],rotation:face.rotation??0};}
-    new Cube({name:cube.name,from:cube.from,to:cube.to,faces}).addTo(groups.get(bone.id)).init();
+    const faces:any={};for(const side of ['north','south','east','west','up','down']){
+      const face=cube.faces[side as keyof typeof cube.faces];
+      faces[side]=face?{texture:textures.get(face.texture).uuid,uv:modelToBlockbenchUv(face.uv,pkg.model.texture_size),rotation:face.rotation??0,enabled:true}:{texture:null,uv:[0,0,0,0],enabled:false};
+    }
+    new Cube({name:cube.name,from:cube.from,to:cube.to,faces,autouv:0,box_uv:false}).addTo(groups.get(bone.id)).init();
   }
   for(const hitbox of pkg.model.hitboxes??[])new Cube({name:'pe_hitbox',from:hitbox.from,to:hitbox.to,faces:{}}).addTo(groups.get(hitbox.bone)).init();
   for(const a of Object.values(pkg.animations)){

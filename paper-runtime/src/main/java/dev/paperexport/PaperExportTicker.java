@@ -16,7 +16,7 @@ public final class PaperExportTicker implements Runnable {
     private final PaperModelRenderer renderer;private final PaperHitboxManager hitboxes;private final PaperEventDispatcher events;private final Map<UUID,PaperEntitySpawner.Instance> active=new HashMap<>();private final int updateTicks;private final double farDistanceSq;
     private long lastNanos,totalNanos,updates;
     public PaperExportTicker(PaperModelRenderer renderer,PaperHitboxManager hitboxes,PaperEventDispatcher events,int updateTicks,double farDistance){this.renderer=renderer;this.hitboxes=hitboxes;this.events=events;this.updateTicks=updateTicks;this.farDistanceSq=farDistance*farDistance;}
-    public void add(PaperEntitySpawner.Instance instance){PaperEntitySpawner.Instance old=active.put(instance.controller.getUniqueId(),instance);if(old!=null){renderer.remove(old.parts);hitboxes.remove(old);}hitboxes.spawn(instance);}
+    public void add(PaperEntitySpawner.Instance instance){PaperEntitySpawner.Instance old=active.put(instance.controller.getUniqueId(),instance);if(old!=null){renderer.remove(old.parts);hitboxes.remove(old);}hitboxes.spawn(instance);updatePose(instance,0,true);}
     public PaperEntitySpawner.Instance get(Entity controller){return active.get(controller.getUniqueId());}
     public int activeCount(){return active.size();}
     public int displayCount(){return active.values().stream().mapToInt(i->i.parts.size()).sum();}
@@ -29,20 +29,24 @@ public final class PaperExportTicker implements Runnable {
             Entity controller=instance.controller;
             if(!instance.dying&&!controller.isValid()){remove(controller);continue;}
             if(instance.dying){instance.deathTime+=dt;var death=instance.definition.animations.get("death");if(death==null||instance.deathTime>death.length){remove(controller);continue;}}
-            if(!instance.dying){instance.lastLocation=controller.getLocation();instance.lastYaw=instance.lastLocation.getYaw();}
+            if(!instance.dying){instance.lastLocation=controller.getLocation();instance.lastYaw=controller instanceof LivingEntity living?living.getBodyYaw():instance.lastLocation.getYaw();}
             Location location=instance.lastLocation;
             if(!instance.dying)updateBoss(instance);
             boolean nearby=instance.dying||nearestPlayerSq(location)<=farDistanceSq;
             if(nearby&&!instance.dying){instance.ambientTime+=dt;if(instance.ambientTime>=8){instance.ambientTime=0;events.playCue(instance,"ambient");}}
             boolean moving=!instance.dying&&controller.getVelocity().lengthSquared()>0.003;
-            if(nearby)for(var event:instance.animation.advance(dt,moving))events.fire(instance,event);
-            Map<String,dev.paperexport.rig.PaperAnimationController.Pose> poses=new HashMap<>();for(var bone:instance.definition.model.bones)poses.put(bone.id,instance.animation.pose(bone));
-            applyHeadTracking(instance,poses,dt);
-            Map<String,Matrix4f> matrices=RigMath.worldMatrices(instance.definition.model.bones,poses,RigMath.rootYaw(instance.lastYaw), (float)instance.definition.entity.stats.scale);
-            hitboxes.update(instance,matrices);
-            if(nearby)renderer.update(location,instance.parts,matrices,updateTicks);
+            for(var event:instance.animation.advance(dt,moving))if(nearby)events.fire(instance,event);
+            updatePose(instance,dt,nearby);
         }
         lastNanos=System.nanoTime()-start;totalNanos+=lastNanos;updates++;
+    }
+    private void updatePose(PaperEntitySpawner.Instance instance,double dt,boolean render){
+        Map<String,dev.paperexport.rig.PaperAnimationController.Pose> poses=new HashMap<>();
+        for(var bone:instance.definition.model.bones)poses.put(bone.id,instance.animation.pose(bone));
+        applyHeadTracking(instance,poses,dt);
+        Map<String,Matrix4f> matrices=RigMath.worldMatrices(instance.definition.model.bones,poses,RigMath.rootYaw(instance.lastYaw),(float)instance.definition.entity.stats.scale);
+        hitboxes.update(instance,matrices);
+        if(render)renderer.update(instance.lastLocation,instance.parts,matrices,updateTicks);
     }
     private void updateBoss(PaperEntitySpawner.Instance instance){
         var boss=instance.definition.entity.boss;if(boss==null||!boss.enabled)return;
@@ -67,10 +71,11 @@ public final class PaperExportTicker implements Runnable {
         var head=instance.definition.model.bones.stream().filter(b->"head".equalsIgnoreCase(b.id)||"head".equalsIgnoreCase(b.name)).findFirst().orElse(null);
         if(head==null)return;
         LivingEntity target=instance.controller instanceof org.bukkit.entity.Mob mob?mob.getTarget():null;
-        if(target==null){double closest=12*12;for(Player player:instance.lastLocation.getWorld().getPlayers())if(!player.isDead()){
+        if(target==null&&"stationary".equals(instance.definition.entity.behavior)){double closest=12*12;for(Player player:instance.lastLocation.getWorld().getPlayers())if(!player.isDead()){
             double distance=player.getLocation().distanceSquared(instance.lastLocation);if(distance<closest){closest=distance;target=player;}
         }}
-        double wantedYaw=0,wantedPitch=0;
+        double wantedYaw=Math.max(-65,Math.min(65,Math.IEEEremainder(instance.lastYaw-instance.lastLocation.getYaw(),360)));
+        double wantedPitch=Math.max(-40,Math.min(40,-instance.lastLocation.getPitch()));
         if(target!=null){
             Location from=instance.controller instanceof LivingEntity living?living.getEyeLocation():instance.lastLocation;
             var delta=target.getEyeLocation().toVector().subtract(from.toVector());

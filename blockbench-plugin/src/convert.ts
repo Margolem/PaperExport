@@ -1,4 +1,4 @@
-import {compileResourcePack,optimizeAnimations,PackageError,validateAnimation,validateEntity,validateManifest,validateModel,type Bone,type Cube as PECube,type EntityAnimation,type HitboxRegion,type Manifest,type Model,type PaperPackage,type TextureRef,type Vec3} from '@paperexport/shared';
+import {blockbenchToModelUv,compileResourcePack,optimizeAnimations,PackageError,validateAnimation,validateEntity,validateManifest,validateModel,type Bone,type Cube as PECube,type EntityAnimation,type HitboxRegion,type Manifest,type Model,type PaperPackage,type TextureRef,type Vec3} from '@paperexport/shared';
 import {state} from './state.js';
 
 const slug=(s:string)=>s.toLowerCase().replace(/[^a-z0-9_.-]+/g,'_').replace(/^_+|_+$/g,'') || 'part';
@@ -46,6 +46,7 @@ export function captureProject():PaperPackage {
     bones.push({id:groups.get(g.uuid)!,name:g.name,parent,pivot:vector(g.origin),rotation:vector(g.rotation),scale:[1,1,1],cubes:[]});
   }
   if(!bones.length)throw new PackageError('Add at least one group/bone to the outliner');
+  const uvSize:[number,number]=[Project.texture_width||16,Project.texture_height||16];
   const hitboxes:HitboxRegion[]=[];
   for(const cube of Cube.all as any[]) {
     if(cube.export===false)continue;
@@ -54,10 +55,10 @@ export function captureProject():PaperPackage {
     if(cube.name==='pe_hitbox') {hitboxes.push({id:`hitbox_${hitboxes.length+1}`,bone:boneId,from:vector(cube.from),to:vector(cube.to)});continue;}
     const faces:PECube['faces']={};
     for(const side of ['north','south','east','west','up','down'] as const){const f=cube.faces[side];if(!f?.enabled||!f.texture)continue;const texture=textureIds.get(typeof f.texture==='string'?f.texture:f.texture.uuid);if(!texture)throw new PackageError(`Cube '${cube.name}' references a missing texture`);
-      const ref=textures[texture];faces[side]={texture,uv:[f.uv[0]*16/ref.width,f.uv[1]*16/ref.height,f.uv[2]*16/ref.width,f.uv[3]*16/ref.height],rotation:f.rotation||0};}
+      faces[side]={texture,uv:blockbenchToModelUv(f.uv,uvSize),rotation:f.rotation||0};}
     bones.find(b=>b.id===boneId)!.cubes.push({name:cube.name,from:vector(cube.from),to:vector(cube.to),faces});
   }
-  const model:Model={texture_size:[Project.texture_width||16,Project.texture_height||16],bones,hitboxes};
+  const model:Model={texture_size:uvSize,bones,hitboxes};
   const sounds:NonNullable<Manifest['sounds']>={};
   for(const [name,data] of Object.entries(s.sounds)){
     if(!/^[a-z0-9_.-]+$/.test(name)||data.length<32||data.length>8*1024*1024||String.fromCharCode(...data.subarray(0,4))!=='OggS')throw new PackageError(`Invalid Ogg sound: ${name}`);
@@ -65,7 +66,7 @@ export function captureProject():PaperPackage {
   }
   const animations=exportAnimations(groups,id,new Set(Object.keys(sounds)));
   optimizeAnimations(animations);
-  const manifest:Manifest={format:'paperexport',format_version:1,id,name:s.name,author:s.author,description:s.description,minecraft_version:'1.21-26.3',paper_version:'1.21-26.3',exporter_version:'1.0.0',model:'model/model.json',entity:'entity/entity.json',animations:Object.fromEntries(Object.keys(animations).map(n=>[n,`animations/${n}.json`])),textures,sounds,resource_pack:'resourcepack/'};
+  const manifest:Manifest={format:'paperexport',format_version:1,id,name:s.name,author:s.author,description:s.description,minecraft_version:'1.21-26.3',paper_version:'1.21-26.3',exporter_version:'1.0.1',model:'model/model.json',entity:'entity/entity.json',animations:Object.fromEntries(Object.keys(animations).map(n=>[n,`animations/${n}.json`])),textures,sounds,resource_pack:'resourcepack/'};
   const entity:typeof s.entity=JSON.parse(JSON.stringify(s.entity));
   if(entity.sound_cues)entity.sound_cues=Object.fromEntries(Object.entries(entity.sound_cues).filter(([,name])=>!!name));
   if(entity.boss)entity.boss.phases=entity.boss.phases.map(p=>({...p,animation:p.animation||undefined,sound:p.sound||undefined}));

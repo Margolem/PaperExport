@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     private bool updatingTimeline;
     private double elapsed;
     private double lastFrame;
-    private double yaw = 0.65, pitch = 0.35, distance = 4;
+    private double yaw = Math.PI - 0.65, pitch = 0.35, distance = 4;
     private Point3D target = new(0, 0.8, 0);
     private Point lastMouse;
     private bool rotating, panning;
@@ -180,7 +180,7 @@ public partial class MainWindow : Window
     private void ResetCamera()
     {
         if (package is not null) target = scene.Center;
-        yaw = 0.65;
+        yaw = Math.PI - 0.65;
         pitch = 0.35;
         distance = Math.Max(2.5, scene.Size * 2.2);
         UpdateCamera();

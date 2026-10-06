@@ -30,19 +30,22 @@ public final class PaperModelRenderer {
                 meta.setCustomModelData(modelData);
             }else meta.setItemModel(new NamespacedKey(id[0],key));
             item.setItemMeta(meta);
-            ItemDisplay display=controller.getWorld().spawn(controller.getLocation(),ItemDisplay.class,e->{e.setItemStack(item);e.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);e.setPersistent(false);e.setGravity(false);e.setInterpolationDelay(0);e.setInterpolationDuration(2);e.setTeleportDuration(2);});
+            ItemDisplay display=controller.getWorld().spawn(displayLocation(controller.getLocation()),ItemDisplay.class,e->{e.setItemStack(item);e.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);e.setPersistent(false);e.setGravity(false);e.setInterpolationDelay(0);e.setInterpolationDuration(2);e.setTeleportDuration(2);});
             display.getPersistentDataContainer().set(plugin.instanceKey(),PersistentDataType.STRING,instanceId.toString());
             parts.put(bone.id,display);
         }
         return parts;
     }
     public void update(Location location,Map<String,ItemDisplay> parts,Map<String,Matrix4f> matrices,int duration){
+        Location displayLocation=displayLocation(location);
         for(var e:parts.entrySet()){ItemDisplay display=e.getValue();if(!display.isValid())continue;
             Matrix4f transform=matrices.get(e.getKey());if(transform==null)continue;
-            if(display.getLocation().distanceSquared(location)>0.0001){display.setTeleportDuration(duration);display.teleport(location);}
+            Location previousLocation=display.getLocation();
+            if(previousLocation.distanceSquared(displayLocation)>0.0001||Math.abs(previousLocation.getYaw())>0.01||Math.abs(previousLocation.getPitch())>0.01){display.setTeleportDuration(duration);display.teleport(displayLocation);}
             Matrix4f previous=lastTransforms.get(display.getUniqueId());
             if(previous==null||!transform.equals(previous,0.00001f)){display.setInterpolationDelay(0);display.setInterpolationDuration(duration);display.setTransformationMatrix(transform);lastTransforms.computeIfAbsent(display.getUniqueId(),ignored->new Matrix4f()).set(transform);}
         }
     }
+    public static Location displayLocation(Location controllerLocation){Location result=controllerLocation.clone();result.setYaw(0);result.setPitch(0);return result;}
     public void remove(Map<String,ItemDisplay> parts){for(ItemDisplay d:parts.values()){lastTransforms.remove(d.getUniqueId());if(d.isValid())d.remove();}parts.clear();}
 }

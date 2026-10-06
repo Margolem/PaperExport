@@ -49,7 +49,7 @@ actual output sizes afterward. It should verify the ZIP CRC.
   "id":"example:creature", "name":"Example Creature",
   "author":"PaperExport contributors", "description":"Example entity",
   "minecraft_version":"1.21-26.3", "paper_version":"1.21-26.3",
-  "exporter_version":"1.0.0",
+  "exporter_version":"1.0.1",
   "model":"model/model.json", "entity":"entity/entity.json",
   "animations":{"idle":"animations/idle.json"},
   "textures":{"skin":{"path":"textures/skin.png","width":16,"height":16}},
@@ -81,6 +81,11 @@ to[i]`) and a `faces` map whose keys are `north`, `south`, `east`, `west`, `up`,
 `down`. A face has `texture` (a manifest texture key), `uv: [u0,v0,u1,v1]`
 in 0–16 model UV coordinates, and optional `rotation` of 0, 90, 180 or 270
 degrees. A missing face is invisible. Transparent PNG pixels remain transparent.
+`texture_size` is the Blockbench project UV grid, which may differ from a PNG's
+pixel width and height. Export converts each face coordinate with
+`model_uv_u = blockbench_u * 16 / texture_size[0]` and the corresponding height
+formula. Import restores that grid before creating cube faces. PNG dimensions
+only describe the image and do not change the UV conversion.
 
 The compiler groups all cubes in a bone into one Minecraft item model. It
 subtracts the bone pivot from every cube coordinate and adds `[8,8,8]`, then
@@ -89,13 +94,16 @@ element coordinate range is `[-16,32]`; a cube outside that range fails
 validation. This conversion places the bone pivot at the center of its item
 model. The renderer uses one ItemDisplay per nonempty bone. It computes each
 bone's relative translation from `bone.pivot - parent.pivot`, then applies
-rest and animated rotation and scale through matrix multiplication. Rotations
+rest and animated rotation and scale through matrix multiplication. Bone Euler
+rotations use Blockbench's ZYX order; animated rotations interpolate with
+quaternions. Rotations
 must never be combined by simply adding Euler angles across parent/child
-bones. The root follows the controller position and yaw. Minecraft model front
-is north (negative Z), so the runtime adds 180 degrees before applying
-controller yaw. A bone whose ID or name is `head` turns toward its mob target
-or a nearby player, clamped to 65 degrees yaw and 40 degrees pitch. Animated
-head motion remains additive.
+bones. The root follows the controller position and body yaw. Minecraft model
+front is north (negative Z), so the rig turns it by `180 - bodyYaw` degrees.
+Display entities stay at zero yaw and pitch so that rotation is applied once.
+A bone whose ID or name is `head` follows the controller's look direction or
+its mob target. Stationary mobs can look at a nearby player. Head movement is
+clamped to 65 degrees yaw and 40 degrees pitch, with animated motion preserved.
 
 Each Blockbench cube named exactly `pe_hitbox` exports one entry in
 `model.hitboxes` instead of a visible cube. An entry has a unique `id`, a
@@ -202,7 +210,9 @@ client delivery.
 ## Viewer and portability
 
 Viewers use the original model, textures and animations, not the compiled
-Minecraft JSON, to show a preview. Texture filtering is nearest neighbor.
-The compiled game view can differ at face UV edges and lighting. No archive
+Minecraft JSON, to show a preview. They normalize face UVs by 16, independent
+of PNG pixel dimensions. Texture filtering is nearest neighbor and model
+faces are single sided like the game. Lighting and transparency blending
+can still differ from a Minecraft client. No archive
 entry may contain an absolute path or refer to a local file outside the ZIP.
 All required textures travel inside the package.

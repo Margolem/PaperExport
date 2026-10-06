@@ -7,6 +7,8 @@ while (folder is not null && !File.Exists(Path.Combine(folder.FullName, "tests",
 if (folder is null) throw new FileNotFoundException("Could not find tests/fixtures/minimal.paperexport");
 var fixture = Path.Combine(folder.FullName, "tests", "fixtures", "minimal.paperexport");
 var loaded = PackageReader.Load(fixture);
+if (!SceneBuilder.NormalizeUv([8, 0, 16, 16]).SequenceEqual([0.5, 0, 1, 1]))
+    throw new Exception("Viewer UVs must use Minecraft's 0–16 model grid.");
 if (loaded.Manifest.Id != "fixture:rig" || loaded.Model.Bones.Count != 6 || loaded.Model.Hitboxes.Count != 2 ||
     loaded.Animations.Count != 5 || loaded.DisplayNodes != 6 ||
     loaded.Manifest.Sounds.Count != 1 || loaded.Entity.Boss?.Enabled != true ||

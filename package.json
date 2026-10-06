@@ -1,14 +1,14 @@
 {
   "name": "paperexport",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "workspaces": [
     "shared",
     "blockbench-plugin"
   ],
   "scripts": {
     "build": "npm run build -w shared && npm run build -w blockbench-plugin",
-    "test": "npm run build -w shared && node tests/generate-fixture.mjs && npm test -w shared"
+    "test": "npm run build -w shared && node tests/generate-fixture.mjs && npm test -w shared && node --test blockbench-plugin/test/*.test.mjs"
   },
   "devDependencies": {
     "pngjs": "^7.0.0",

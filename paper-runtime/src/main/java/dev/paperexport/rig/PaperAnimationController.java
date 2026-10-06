@@ -47,5 +47,6 @@ public final class PaperAnimationController {
         return quat(keys.getLast().value);
     }
     private static Vector3f vec(double[] v){return new Vector3f((float)v[0],(float)v[1],(float)v[2]);}
-    public static Quaternionf quat(double[] degrees){return new Quaternionf().rotationXYZ((float)Math.toRadians(degrees[0]),(float)Math.toRadians(degrees[1]),(float)Math.toRadians(degrees[2]));}
+    /** Blockbench's ZYX Euler order composes Rz * Ry * Rx. */
+    public static Quaternionf quat(double[] degrees){return new Quaternionf().rotationZYX((float)Math.toRadians(degrees[2]),(float)Math.toRadians(degrees[1]),(float)Math.toRadians(degrees[0]));}
 }

@@ -43,28 +43,23 @@ public sealed class SceneBuilder
             var group = new Model3DGroup();
             groups.Add(bone.Id, group);
             var scale = new ScaleTransform3D();
-            var x = new AxisAngleRotation3D(new Vector3D(1, 0, 0), 0);
-            var y = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0);
-            var z = new AxisAngleRotation3D(new Vector3D(0, 0, 1), 0);
+            var rotation = new QuaternionRotation3D(Quaternion.Identity);
             var offset = new TranslateTransform3D();
             var transforms = new Transform3DGroup();
             transforms.Children.Add(scale);
-            transforms.Children.Add(new RotateTransform3D(x));
-            transforms.Children.Add(new RotateTransform3D(y));
-            transforms.Children.Add(new RotateTransform3D(z));
+            transforms.Children.Add(new RotateTransform3D(rotation));
             transforms.Children.Add(offset);
             group.Transform = transforms;
             foreach (var cube in bone.Cubes)
             {
                 foreach (var (side, face) in cube.Faces)
                 {
-                    var size = package.Manifest.Textures[face.Texture];
-                    group.Children.Add(TexturedFace(cube, bone, side, face, size, brushes[face.Texture]));
+                    group.Children.Add(TexturedFace(cube, bone, side, face, brushes[face.Texture]));
                 }
             }
             var pivot = Axes();
             if (showPivots) group.Children.Add(pivot);
-            boneViews.Add(bone.Id, new BoneView(group, scale, x, y, z, offset, pivot));
+            boneViews.Add(bone.Id, new BoneView(group, scale, rotation, offset, pivot));
         }
         foreach (var bone in package.Model.Bones)
             (bone.Parent is null ? root : groups[bone.Parent]).Children.Add(groups[bone.Id]);
@@ -82,19 +77,15 @@ public sealed class SceneBuilder
             {
                 var group = new Model3DGroup();
                 var scale = new ScaleTransform3D();
-                var x = new AxisAngleRotation3D(new Vector3D(1, 0, 0), 0);
-                var y = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0);
-                var z = new AxisAngleRotation3D(new Vector3D(0, 0, 1), 0);
+                var rotation = new QuaternionRotation3D(Quaternion.Identity);
                 var offset = new TranslateTransform3D();
                 var transforms = new Transform3DGroup();
                 transforms.Children.Add(scale);
-                transforms.Children.Add(new RotateTransform3D(x));
-                transforms.Children.Add(new RotateTransform3D(y));
-                transforms.Children.Add(new RotateTransform3D(z));
+                transforms.Children.Add(new RotateTransform3D(rotation));
                 transforms.Children.Add(offset);
                 group.Transform = transforms;
                 hitboxGroups.Add(bone.Id, group);
-                hitboxViews.Add(bone.Id, new BoneView(group, scale, x, y, z, offset, new Model3DGroup()));
+                hitboxViews.Add(bone.Id, new BoneView(group, scale, rotation, offset, new Model3DGroup()));
             }
             foreach (var region in package.Model.Hitboxes)
             {
@@ -146,15 +137,13 @@ public sealed class SceneBuilder
             var track = animation?.Tracks.FirstOrDefault(t => t.Bone == bone.Id);
             var localTime = animation is null ? 0 : animation.Loop == "loop" ? time % animation.Length : Math.Min(time, animation.Length);
             var position = Sample(track?.Position, localTime, [0, 0, 0]);
-            var rotation = Sample(track?.Rotation, localTime, [0, 0, 0]);
+            var rotation = SampleRotation(track?.Rotation, localTime);
             var scale = Sample(track?.Scale, localTime, [1, 1, 1]);
             var parent = bone.Parent is null ? null : package.Model.Bones.First(b => b.Id == bone.Parent);
             view.Offset.OffsetX = (bone.Pivot[0] - (parent?.Pivot[0] ?? 0) + position[0]) / 16;
             view.Offset.OffsetY = (bone.Pivot[1] - (parent?.Pivot[1] ?? 0) + position[1]) / 16;
             view.Offset.OffsetZ = (bone.Pivot[2] - (parent?.Pivot[2] ?? 0) + position[2]) / 16;
-            view.X.Angle = bone.Rotation[0] + rotation[0];
-            view.Y.Angle = bone.Rotation[1] + rotation[1];
-            view.Z.Angle = bone.Rotation[2] + rotation[2];
+            view.Rotation.Quaternion = Quaternion.Multiply(Euler(bone.Rotation), rotation);
             view.Scale.ScaleX = bone.Scale[0] * scale[0];
             view.Scale.ScaleY = bone.Scale[1] * scale[1];
             view.Scale.ScaleZ = bone.Scale[2] * scale[2];
@@ -163,9 +152,7 @@ public sealed class SceneBuilder
                 hitboxView.Offset.OffsetX = view.Offset.OffsetX;
                 hitboxView.Offset.OffsetY = view.Offset.OffsetY;
                 hitboxView.Offset.OffsetZ = view.Offset.OffsetZ;
-                hitboxView.X.Angle = view.X.Angle;
-                hitboxView.Y.Angle = view.Y.Angle;
-                hitboxView.Z.Angle = view.Z.Angle;
+                hitboxView.Rotation.Quaternion = view.Rotation.Quaternion;
                 hitboxView.Scale.ScaleX = view.Scale.ScaleX;
                 hitboxView.Scale.ScaleY = view.Scale.ScaleY;
                 hitboxView.Scale.ScaleZ = view.Scale.ScaleZ;
@@ -186,6 +173,24 @@ public sealed class SceneBuilder
         }
         return keys[^1].Value;
     }
+    private static Quaternion SampleRotation(List<PeKey>? keys, double time)
+    {
+        if (keys is null || keys.Count == 0) return Quaternion.Identity;
+        if (time <= keys[0].Time) return Euler(keys[0].Value);
+        for (int i = 1; i < keys.Count; i++)
+        {
+            if (time > keys[i].Time) continue;
+            var a = keys[i - 1];
+            var b = keys[i];
+            var factor = a.Interpolation == "step" ? 0 : (time - a.Time) / (b.Time - a.Time);
+            return Quaternion.Slerp(Euler(a.Value), Euler(b.Value), factor);
+        }
+        return Euler(keys[^1].Value);
+    }
+    private static Quaternion Euler(double[] degrees) => Quaternion.Multiply(
+        new Quaternion(new Vector3D(0, 0, 1), degrees[2]),
+        Quaternion.Multiply(new Quaternion(new Vector3D(0, 1, 0), degrees[1]),
+            new Quaternion(new Vector3D(1, 0, 0), degrees[0])));
     private static ImageBrush TextureBrush(byte[] png)
     {
         using var stream = new MemoryStream(png, writable: false);
@@ -200,7 +205,7 @@ public sealed class SceneBuilder
         brush.Freeze();
         return brush;
     }
-    private static GeometryModel3D TexturedFace(PeCube cube, PeBone bone, string side, PeFace face, PeTexture texture, ImageBrush brush)
+    private static GeometryModel3D TexturedFace(PeCube cube, PeBone bone, string side, PeFace face, ImageBrush brush)
     {
         double x0 = (cube.From[0] - bone.Pivot[0]) / 16, x1 = (cube.To[0] - bone.Pivot[0]) / 16;
         double y0 = (cube.From[1] - bone.Pivot[1]) / 16, y1 = (cube.To[1] - bone.Pivot[1]) / 16;
@@ -214,10 +219,11 @@ public sealed class SceneBuilder
             "south" => [new(x0,y0,z1),new(x1,y0,z1),new(x1,y1,z1),new(x0,y1,z1)],
             _ => [new(x1,y0,z0),new(x0,y0,z0),new(x0,y1,z0),new(x1,y1,z0)]
         };
-        var u0 = face.Uv[0] / texture.Width;
-        var v0 = face.Uv[1] / texture.Height;
-        var u1 = face.Uv[2] / texture.Width;
-        var v1 = face.Uv[3] / texture.Height;
+        var normalized = NormalizeUv(face.Uv);
+        var u0 = normalized[0];
+        var v0 = normalized[1];
+        var u1 = normalized[2];
+        var v1 = normalized[3];
         Point[] uv = [new(u0,v1),new(u1,v1),new(u1,v0),new(u0,v0)];
         var turns = (face.Rotation / 90) % 4;
         if (turns != 0) uv = Enumerable.Range(0, 4).Select(i => uv[(i + turns) % 4]).ToArray();
@@ -228,8 +234,12 @@ public sealed class SceneBuilder
             TriangleIndices = new Int32Collection([0, 1, 2, 0, 2, 3])
         };
         var material = new DiffuseMaterial(brush);
-        return new GeometryModel3D(mesh, material) { BackMaterial = material };
+        // Minecraft item-model faces are single sided; drawing their backs makes
+        // translucent textures show through from the wrong direction.
+        return new GeometryModel3D(mesh, material);
     }
+    // Minecraft model JSON maps a 0–16 UV grid over the entire PNG.
+    public static double[] NormalizeUv(double[] uv) => uv.Select(value => value / 16).ToArray();
     private static Model3DGroup Axes()
     {
         var group = new Model3DGroup();
@@ -287,6 +297,5 @@ public sealed class SceneBuilder
         return new GeometryModel3D(mesh, material) { BackMaterial = material };
     }
     private sealed record BoneView(Model3DGroup Group, ScaleTransform3D Scale,
-        AxisAngleRotation3D X, AxisAngleRotation3D Y, AxisAngleRotation3D Z,
-        TranslateTransform3D Offset, Model3DGroup Pivot);
+        QuaternionRotation3D Rotation, TranslateTransform3D Offset, Model3DGroup Pivot);
 }

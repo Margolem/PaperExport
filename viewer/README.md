@@ -7,6 +7,8 @@ Electron runtime.
 The Model tab shows the rig, animation playback, textures, sounds, and
 hitboxes. The Files tab lists package contents. Both older 1.21.11 packages
 and current portable packages open in the same viewer.
+The preview starts on the model's north/front side, uses single-sided faces,
+and applies the same quaternion bone rotation order as the Paper runtime.
 
 Build and run:
 

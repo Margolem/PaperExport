@@ -4,7 +4,9 @@ import dev.paperexport.format.PaperEntityDefinition;
 import dev.paperexport.format.PaperEntityLoader;
 import dev.paperexport.format.PaperExportValidator;
 import dev.paperexport.rig.PaperAnimationController;
+import dev.paperexport.rig.PaperModelRenderer;
 import dev.paperexport.rig.RigMath;
+import org.bukkit.Location;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -48,6 +50,19 @@ public class FormatAndRigTest {
         Vector3f south=new Matrix4f().rotateY(RigMath.rootYaw(0)).transformDirection(new Vector3f(forward));
         Vector3f west=new Matrix4f().rotateY(RigMath.rootYaw(90)).transformDirection(new Vector3f(forward));
         assertEquals(1,south.z,.0001f);assertEquals(-1,west.x,.0001f);
+    }
+    @Test void displayLocationCannotApplyControllerYawTwice(){
+        Location controller=new Location(null,2,3,4,90,25);
+        Location display=PaperModelRenderer.displayLocation(controller);
+        assertEquals(0,display.getYaw());assertEquals(0,display.getPitch());
+        assertEquals(90,controller.getYaw());assertEquals(25,controller.getPitch());
+        assertEquals(2,display.getX());assertEquals(3,display.getY());assertEquals(4,display.getZ());
+    }
+    @Test void compoundBoneRotationUsesBlockbenchZyxOrder(){
+        Quaternionf rotation=PaperAnimationController.quat(new double[]{30,45,60});
+        Vector3f actual=rotation.transform(new Vector3f(0,0,-1));
+        Vector3f expected=new Matrix4f().rotateZ((float)Math.toRadians(60)).rotateY((float)Math.toRadians(45)).rotateX((float)Math.toRadians(30)).transformDirection(new Vector3f(0,0,-1));
+        assertEquals(expected.x,actual.x,.0001f);assertEquals(expected.y,actual.y,.0001f);assertEquals(expected.z,actual.z,.0001f);
     }
     @Test void invalidHitboxBoneRejected()throws Exception{
         PaperEntityDefinition d=new PaperEntityLoader().load(fixture);

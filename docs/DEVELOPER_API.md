@@ -4,14 +4,14 @@ PaperExport Runtime provides a small Java API through Bukkit's service
 manager. Your plugin runs on Paper and declares `depend: [PaperExport]`.
 The API is available only while the PaperExport plugin is installed and enabled.
 
-Compile against [PaperExport-API-1.0.0.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.0/PaperExport-API-1.0.0.jar)
+Compile against [PaperExport-API-1.0.1.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.1/PaperExport-API-1.0.1.jar)
 and a Paper API for your development version. Use `compileOnly` for both.
 The runtime JAR already provides the API classes on the server.
 
 ```kotlin
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnly(files("../dist/PaperExport-API-1.0.0.jar"))
+    compileOnly(files("../dist/PaperExport-API-1.0.1.jar"))
 }
 ```
 
