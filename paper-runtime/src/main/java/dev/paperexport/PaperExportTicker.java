@@ -32,15 +32,15 @@ public final class PaperExportTicker implements Runnable {
             if(!instance.dying){instance.lastLocation=controller.getLocation();instance.lastYaw=instance.lastLocation.getYaw();}
             Location location=instance.lastLocation;
             if(!instance.dying)updateBoss(instance);
-            if(!instance.dying&&nearestPlayerSq(location)>farDistanceSq)continue;
-            if(!instance.dying){instance.ambientTime+=dt;if(instance.ambientTime>=8){instance.ambientTime=0;events.playCue(instance,"ambient");}}
+            boolean nearby=instance.dying||nearestPlayerSq(location)<=farDistanceSq;
+            if(nearby&&!instance.dying){instance.ambientTime+=dt;if(instance.ambientTime>=8){instance.ambientTime=0;events.playCue(instance,"ambient");}}
             boolean moving=!instance.dying&&controller.getVelocity().lengthSquared()>0.003;
-            for(var event:instance.animation.advance(dt,moving))events.fire(instance,event);
+            if(nearby)for(var event:instance.animation.advance(dt,moving))events.fire(instance,event);
             Map<String,dev.paperexport.rig.PaperAnimationController.Pose> poses=new HashMap<>();for(var bone:instance.definition.model.bones)poses.put(bone.id,instance.animation.pose(bone));
             applyHeadTracking(instance,poses,dt);
             Map<String,Matrix4f> matrices=RigMath.worldMatrices(instance.definition.model.bones,poses,RigMath.rootYaw(instance.lastYaw), (float)instance.definition.entity.stats.scale);
-            renderer.update(location,instance.parts,matrices,updateTicks);
             hitboxes.update(instance,matrices);
+            if(nearby)renderer.update(location,instance.parts,matrices,updateTicks);
         }
         lastNanos=System.nanoTime()-start;totalNanos+=lastNanos;updates++;
     }
