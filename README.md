@@ -42,7 +42,7 @@ No client mod is required.
 
 ## Installing the Blockbench plugin
 
-Keep [paperexport.js](https://github.com/Margolem/PaperExport/releases/download/v1.0.1/paperexport.js) and [icon.png](https://github.com/Margolem/PaperExport/releases/download/v1.0.1/icon.png) in the
+Keep [paperexport.js](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/paperexport.js) and [icon.png](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/icon.png) in the
 same folder, then install `paperexport.js` as a local
 Blockbench plugin using **File → Plugins → Load Plugin from File**. In Blockbench,
 choose **File → New → PaperMC Custom Entity**. The Paper Entity panel appears
@@ -63,7 +63,7 @@ To add attack regions, create cubes named exactly `pe_hitbox` inside bones.
 You may add several cubes with that name. They are exported as invisible
 interaction hitboxes and excluded from the visible resource-pack model.
 The separate [PaperExport Examples](https://github.com/Margolem/PaperExport-Examples)
-plugin includes a test dummy and a ghost giant.
+plugin includes a test dummy, a ghost giant, and a 128x128 HD model sample.
 
 ## Exporting `.paperexport`
 
@@ -77,7 +77,7 @@ It combines cubes per bone and removes redundant animation keys. See the
 
 ## Installing PaperExport Runtime
 
-1. Copy [PaperExport-Paper-1.0.1.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.1/PaperExport-Paper-1.0.1.jar) to
+1. Copy [PaperExport-Paper-1.0.2.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/PaperExport-Paper-1.0.2.jar) to
    `plugins/` on a supported Paper server. The same JAR works across the range.
 2. Start once. PaperExport creates `plugins/PaperExport/entities/`,
    `generated/`, `resourcepack/`, `cache/`, `logs/`, and `config.yml`.
@@ -106,7 +106,7 @@ should be respawned when models change.
 
 Run `dotnet run --project viewer/PaperExport.Viewer.csproj -- path/to/mob.paperexport`
 for development. `build-all.bat` publishes a self-contained Windows executable
-at [PaperExport-Viewer-Windows.exe](https://github.com/Margolem/PaperExport/releases/download/v1.0.1/PaperExport-Viewer-Windows.exe).
+at [PaperExport-Viewer-Windows.exe](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/PaperExport-Viewer-Windows.exe).
 Open a `.paperexport` through File → Open, drag it onto the window, or pass
 its path as an argument. To add the viewer to Windows **Open with**, run
 `rtk powershell -NoProfile -File viewer/register-file-association.ps1`.
@@ -124,7 +124,7 @@ local server binds to `127.0.0.1:25566`. See
 
 ## Plugin API
 
-Compile your plugin against `dist/PaperExport-API-1.0.1.jar` with `compileOnly`
+Compile your plugin against `dist/PaperExport-API-1.0.2.jar` with `compileOnly`
 and declare `depend: [PaperExport]` in `plugin.yml`. At runtime, obtain
 `PaperExportApi` from Bukkit's services manager. The API is registered only by
 the installed PaperExport plugin. It can list, spawn, animate, sound, despawn,

@@ -200,7 +200,15 @@ public sealed class SceneBuilder
         bitmap.StreamSource = stream;
         bitmap.EndInit();
         bitmap.Freeze();
-        var brush = new ImageBrush(bitmap) { Stretch = Stretch.Fill };
+        // Each face is a separate mesh. A relative viewport fits the whole PNG
+        // into that face's UV bounds, repeating it on every side of a cube.
+        // The model UVs are already normalized against the entire atlas.
+        var brush = new ImageBrush(bitmap)
+        {
+            Stretch = Stretch.Fill,
+            ViewportUnits = BrushMappingMode.Absolute,
+            Viewport = new Rect(0, 0, 1, 1)
+        };
         RenderOptions.SetBitmapScalingMode(brush, BitmapScalingMode.NearestNeighbor);
         brush.Freeze();
         return brush;

@@ -23,18 +23,25 @@ public final class PaperExportTicker implements Runnable {
     public double averageMillis(){return updates==0?0:(double)totalNanos/updates/1_000_000;}
     public void remove(Entity controller){PaperEntitySpawner.Instance instance=active.remove(controller.getUniqueId());if(instance!=null){renderer.remove(instance.parts);hitboxes.remove(instance);if(instance.bossBar!=null)instance.bossBar.removeAll();}}
     public void stop(){for(var i:new ArrayList<>(active.values())){renderer.remove(i.parts);hitboxes.remove(i);if(i.bossBar!=null)i.bossBar.removeAll();}active.clear();}
-    public void death(Entity controller){PaperEntitySpawner.Instance i=get(controller);if(i!=null){i.dying=true;i.deathTime=0;i.animation.play("death");if(i.bossBar!=null)i.bossBar.removeAll();}}
+    public void death(Entity controller){PaperEntitySpawner.Instance i=get(controller);if(i!=null){i.dying=true;i.deathTime=0;i.movement.reset();i.animation.force("death");if(i.bossBar!=null)i.bossBar.removeAll();}}
     @Override public void run(){long start=System.nanoTime();double dt=updateTicks/20.0;
         for(var instance:new ArrayList<>(active.values())){
             Entity controller=instance.controller;
             if(!instance.dying&&!controller.isValid()){remove(controller);continue;}
             if(instance.dying){instance.deathTime+=dt;var death=instance.definition.animations.get("death");if(death==null||instance.deathTime>death.length){remove(controller);continue;}}
-            if(!instance.dying){instance.lastLocation=controller.getLocation();instance.lastYaw=controller instanceof LivingEntity living?living.getBodyYaw():instance.lastLocation.getYaw();}
+            boolean moving=false;
+            if(!instance.dying){
+                Location current=controller.getLocation();
+                moving=current.getWorld()==instance.lastLocation.getWorld()
+                    ?instance.movement.sample(current.getX()-instance.lastLocation.getX(),current.getZ()-instance.lastLocation.getZ(),updateTicks)
+                    :instance.movement.reset();
+                instance.lastLocation=current;
+                instance.lastYaw=PaperEntitySpawner.controllerYaw(controller,current);
+            }
             Location location=instance.lastLocation;
             if(!instance.dying)updateBoss(instance);
             boolean nearby=instance.dying||nearestPlayerSq(location)<=farDistanceSq;
             if(nearby&&!instance.dying){instance.ambientTime+=dt;if(instance.ambientTime>=8){instance.ambientTime=0;events.playCue(instance,"ambient");}}
-            boolean moving=!instance.dying&&controller.getVelocity().lengthSquared()>0.003;
             for(var event:instance.animation.advance(dt,moving))if(nearby)events.fire(instance,event);
             updatePose(instance,dt,nearby);
         }
@@ -46,7 +53,7 @@ public final class PaperExportTicker implements Runnable {
         applyHeadTracking(instance,poses,dt);
         Map<String,Matrix4f> matrices=RigMath.worldMatrices(instance.definition.model.bones,poses,RigMath.rootYaw(instance.lastYaw),(float)instance.definition.entity.stats.scale);
         hitboxes.update(instance,matrices);
-        if(render)renderer.update(instance.lastLocation,instance.parts,matrices,updateTicks);
+        if(render)renderer.update(instance.lastLocation,instance.lastLocation.getYaw(),instance.parts,matrices,updateTicks);
     }
     private void updateBoss(PaperEntitySpawner.Instance instance){
         var boss=instance.definition.entity.boss;if(boss==null||!boss.enabled)return;

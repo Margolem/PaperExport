@@ -5,6 +5,7 @@ import dev.paperexport.format.PaperEntityLoader;
 import dev.paperexport.format.PaperExportValidator;
 import dev.paperexport.rig.PaperAnimationController;
 import dev.paperexport.rig.PaperModelRenderer;
+import dev.paperexport.rig.PaperMovementTracker;
 import dev.paperexport.rig.RigMath;
 import org.bukkit.Location;
 import org.joml.Matrix4f;
@@ -51,13 +52,53 @@ public class FormatAndRigTest {
         Vector3f west=new Matrix4f().rotateY(RigMath.rootYaw(90)).transformDirection(new Vector3f(forward));
         assertEquals(1,south.z,.0001f);assertEquals(-1,west.x,.0001f);
     }
-    @Test void displayLocationCannotApplyControllerYawTwice(){
+    @Test void displayArrowUsesControllerYaw(){
         Location controller=new Location(null,2,3,4,90,25);
         Location display=PaperModelRenderer.displayLocation(controller);
-        assertEquals(0,display.getYaw());assertEquals(0,display.getPitch());
+        assertEquals(90,display.getYaw());assertEquals(0,display.getPitch());
         assertEquals(90,controller.getYaw());assertEquals(25,controller.getPitch());
         assertEquals(2,display.getX());assertEquals(3,display.getY());assertEquals(4,display.getZ());
     }
+    @Test void itemDisplayClientRotationMatchesLogicalRigAndHitboxes(){
+        for(float bodyYaw:new float[]{0,45,90,180,-90}){
+            Matrix4f logical=new Matrix4f().rotateY(RigMath.rootYaw(bodyYaw)).translate(.25f,1.5f,.5f).rotateX(.3f).scale(2,.8f,1.5f);
+            Matrix4f original=new Matrix4f(logical);
+            for(float displayYaw:new float[]{bodyYaw,bodyYaw+35}){
+                Matrix4f sent=PaperModelRenderer.itemDisplayMatrix(logical,displayYaw);
+                // Minecraft applies display yaw before our matrix, then 180 degrees to the item.
+                Matrix4f client=new Matrix4f().rotateY((float)Math.toRadians(-displayYaw)).mul(sent).rotateY((float)Math.PI);
+                for(Vector3f point:new Vector3f[]{new Vector3f(),new Vector3f(1,2,-3)}){
+                    Vector3f expected=original.transformPosition(new Vector3f(point));
+                    Vector3f actual=client.transformPosition(point);
+                    assertEquals(expected.x,actual.x,.0001f);assertEquals(expected.y,actual.y,.0001f);assertEquals(expected.z,actual.z,.0001f);
+                }
+                Vector3f front=new Matrix4f().rotateY((float)Math.toRadians(-displayYaw)).mul(PaperModelRenderer.itemDisplayMatrix(new Matrix4f().rotateY(RigMath.rootYaw(bodyYaw)),displayYaw)).rotateY((float)Math.PI).transformDirection(new Vector3f(0,0,-1));
+                assertEquals(-Math.sin(Math.toRadians(bodyYaw)),front.x,.0001);
+                assertEquals(Math.cos(Math.toRadians(bodyYaw)),front.z,.0001);
+            }
+            assertTrue(logical.equals(original,.00001f),"visual correction must leave the hitbox transform alone");
+        }
+    }
+    @Test void walkingUsesHorizontalTravelAndStopsAfterShortDelay(){
+        PaperMovementTracker movement=new PaperMovementTracker();
+        assertFalse(movement.sample(0,0,2));
+        assertFalse(movement.sample(.01,0,2));
+        assertTrue(movement.sample(.08,0,2));
+        assertTrue(movement.sample(0,0,2));
+        assertFalse(movement.sample(0,0,4));
+        assertFalse(movement.sample(12,0,2),"teleports must not start a walk cycle");
+    }
+    @Test void locomotionSwitchesImmediatelyAndOneShotFinishes()throws Exception{
+        PaperEntityDefinition definition=new PaperEntityLoader().load(fixture);
+        PaperAnimationController controller=new PaperAnimationController(definition);
+        assertEquals("idle",controller.name());
+        assertEquals("walk",advanceName(controller,definition.animations.get("idle").length,true));
+        controller.play("attack");assertEquals("attack",controller.name());
+        assertEquals("idle",advanceName(controller,definition.animations.get("attack").length+.1,false));
+        controller.force("death");
+        assertEquals("death",advanceName(controller,definition.animations.get("death").length+.1,true));
+    }
+    private static String advanceName(PaperAnimationController controller,double seconds,boolean moving){controller.advance(seconds,moving);return controller.name();}
     @Test void compoundBoneRotationUsesBlockbenchZyxOrder(){
         Quaternionf rotation=PaperAnimationController.quat(new double[]{30,45,60});
         Vector3f actual=rotation.transform(new Vector3f(0,0,-1));

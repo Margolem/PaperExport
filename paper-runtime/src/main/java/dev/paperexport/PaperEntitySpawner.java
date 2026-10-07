@@ -3,6 +3,7 @@ package dev.paperexport;
 import dev.paperexport.format.PaperEntityDefinition;
 import dev.paperexport.rig.PaperAnimationController;
 import dev.paperexport.rig.PaperModelRenderer;
+import dev.paperexport.rig.PaperMovementTracker;
 import org.bukkit.Location;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BossBar;
@@ -29,6 +30,7 @@ public final class PaperEntitySpawner {
         public final Map<String,org.bukkit.entity.ItemDisplay> parts;
         public final Map<String,Interaction> hitboxes=new java.util.HashMap<>();
         public final PaperAnimationController animation;
+        public final PaperMovementTracker movement=new PaperMovementTracker();
         public boolean dying;
         public double deathTime;
         public Location lastLocation;
@@ -38,7 +40,7 @@ public final class PaperEntitySpawner {
         public double ambientTime;
         public float headYaw,headPitch;
         Instance(Entity controller,PaperEntityDefinition definition,UUID id,Map<String,org.bukkit.entity.ItemDisplay> parts){
-            this.controller=controller;this.definition=definition;this.id=id;this.parts=parts;this.animation=new PaperAnimationController(definition);this.lastLocation=controller.getLocation();this.lastYaw=controller instanceof LivingEntity living?living.getBodyYaw():lastLocation.getYaw();
+            this.controller=controller;this.definition=definition;this.id=id;this.parts=parts;this.animation=new PaperAnimationController(definition);this.lastLocation=controller.getLocation();this.lastYaw=controllerYaw(controller,lastLocation);
             var boss=definition.entity.boss;
             if(boss!=null&&boss.enabled)bossBar=Bukkit.createBossBar(boss.title.isBlank()?definition.manifest.name:boss.title,BarColor.valueOf(boss.bar_color),BarStyle.valueOf(boss.bar_style));
         }
@@ -73,6 +75,10 @@ public final class PaperEntitySpawner {
         return new Instance(controller,definition,id,renderer.spawn(controller,definition,id));
     }
     private static void set(LivingEntity entity,Attribute attribute,double value){AttributeInstance instance=entity.getAttribute(attribute);if(instance!=null)instance.setBaseValue(value);}
+    static float controllerYaw(Entity controller,Location location){
+        if(controller instanceof Mob mob&&!mob.hasAI())return location.getYaw();
+        return controller instanceof LivingEntity living?living.getBodyYaw():location.getYaw();
+    }
     private static Attribute attribute(String modern,String legacy){
         for(String name:new String[]{modern,legacy})try{return (Attribute)Attribute.class.getField(name).get(null);}
         catch(ReflectiveOperationException ignored){}

@@ -66,7 +66,7 @@ export function captureProject():PaperPackage {
   }
   const animations=exportAnimations(groups,id,new Set(Object.keys(sounds)));
   optimizeAnimations(animations);
-  const manifest:Manifest={format:'paperexport',format_version:1,id,name:s.name,author:s.author,description:s.description,minecraft_version:'1.21-26.3',paper_version:'1.21-26.3',exporter_version:'1.0.1',model:'model/model.json',entity:'entity/entity.json',animations:Object.fromEntries(Object.keys(animations).map(n=>[n,`animations/${n}.json`])),textures,sounds,resource_pack:'resourcepack/'};
+  const manifest:Manifest={format:'paperexport',format_version:1,id,name:s.name,author:s.author,description:s.description,minecraft_version:'1.21-26.3',paper_version:'1.21-26.3',exporter_version:'1.0.2',model:'model/model.json',entity:'entity/entity.json',animations:Object.fromEntries(Object.keys(animations).map(n=>[n,`animations/${n}.json`])),textures,sounds,resource_pack:'resourcepack/'};
   const entity:typeof s.entity=JSON.parse(JSON.stringify(s.entity));
   if(entity.sound_cues)entity.sound_cues=Object.fromEntries(Object.entries(entity.sound_cues).filter(([,name])=>!!name));
   if(entity.boss)entity.boss.phases=entity.boss.phases.map(p=>({...p,animation:p.animation||undefined,sound:p.sound||undefined}));

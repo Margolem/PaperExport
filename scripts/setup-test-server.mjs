@@ -33,7 +33,7 @@ if(!valid){
     await rename(file,jar);
   }catch(error){await rm(file,{force:true});throw error;}
 }
-await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.0.1.jar',resolve(root,'plugins','PaperExport.jar'));
+await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.0.2.jar',resolve(root,'plugins','PaperExport.jar'));
 const properties=resolve(root,'server.properties');
 try{await readFile(properties);}catch{
   await writeFile(properties,'server-ip=127.0.0.1\nserver-port=25566\nlevel-name=test-world\nmax-players=4\nspawn-protection=0\nonline-mode=true\nmotd=PaperExport local test\n');

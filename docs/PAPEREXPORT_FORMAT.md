@@ -49,7 +49,7 @@ actual output sizes afterward. It should verify the ZIP CRC.
   "id":"example:creature", "name":"Example Creature",
   "author":"PaperExport contributors", "description":"Example entity",
   "minecraft_version":"1.21-26.3", "paper_version":"1.21-26.3",
-  "exporter_version":"1.0.1",
+  "exporter_version":"1.0.2",
   "model":"model/model.json", "entity":"entity/entity.json",
   "animations":{"idle":"animations/idle.json"},
   "textures":{"skin":{"path":"textures/skin.png","width":16,"height":16}},
@@ -99,8 +99,13 @@ rotations use Blockbench's ZYX order; animated rotations interpolate with
 quaternions. Rotations
 must never be combined by simply adding Euler angles across parent/child
 bones. The root follows the controller position and body yaw. Minecraft model
-front is north (negative Z), so the rig turns it by `180 - bodyYaw` degrees.
-Display entities stay at zero yaw and pitch so that rotation is applied once.
+front is north (negative Z), so the logical rig turns it by `180 - bodyYaw`
+degrees. Item display entities use the controller's entity yaw and zero pitch,
+so their debug facing arrows follow the controller. The visual matrix
+compensates for both the display's yaw and Minecraft's built-in 180-degree
+item rotation; the final geometry stays aligned with the logical rig and
+its hitboxes. If a mob's AI is disabled, the logical rig uses entity yaw
+because its body yaw may remain stale after a teleport.
 A bone whose ID or name is `head` follows the controller's look direction or
 its mob target. Stationary mobs can look at a nearby player. Head movement is
 clamped to 65 degrees yaw and 40 degrees pitch, with animated motion preserved.
@@ -133,7 +138,8 @@ An event has `time`, `type` (`sound`, `particle`, `damage`, `custom_event`) and
 `data` with primitive values. These are declarations, never scripts.
 Administrators decide which events the runtime may act on. Command events,
 JavaScript, shell content, and arbitrary server code are prohibited. The
-current runtime triggers animation state changes from controller movement,
+current runtime triggers animation state changes from measured horizontal
+controller travel,
 damage and attack. It dispatches allowlisted sound and particle events.
 Package damage events are disabled by default and require
 `events.allow-package-damage: true`; radius and damage are capped at runtime.

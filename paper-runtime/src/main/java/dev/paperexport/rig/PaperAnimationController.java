@@ -3,10 +3,8 @@ package dev.paperexport.rig;
 import dev.paperexport.format.PaperEntityDefinition;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import static dev.paperexport.format.PaperEntityDefinition.*;
 
 public final class PaperAnimationController {
@@ -21,11 +19,15 @@ public final class PaperAnimationController {
     public void play(String name){Animation next=definition.animations.get(name);if(next==null)return;if(current==next&&"loop".equals(next.loop))return;if(current!=null&&current.priority>next.priority&&time<current.length&& !"loop".equals(current.loop))return;current=next;time=0;}
     public void force(String name){Animation next=definition.animations.get(name);if(next!=null){current=next;time=0;}}
     public List<Event> advance(double seconds,boolean moving){
-        if(current==null){play(moving?"walk":"idle");return List.of();}
+        String locomotion=moving&&definition.animations.containsKey("walk")?"walk":"idle";
+        if(current==null)play(locomotion);
+        if(current==null)return List.of();
+        if(current.name.equals("idle")||current.name.equals("walk")||current.name.equals("run")){
+            if(!current.name.equals(locomotion))force(locomotion);
+        }
         Animation old=current;double from=time;time+=seconds;List<Event> fired=new ArrayList<>();
         for(Event e:old.events)if(e.time>from&&e.time<=Math.min(time,old.length))fired.add(e);
-        if(time>=current.length){if("loop".equals(current.loop)){time%=current.length;for(Event e:old.events)if(e.time<=time)fired.add(e);}else if("hold".equals(current.loop))time=current.length;else{current=null;time=0;play(moving?"walk":"idle");}}
-        else if(List.of("idle","walk","run").contains(current.name)){String wanted=moving?(definition.animations.containsKey("walk")?"walk":"idle"):"idle";if(!wanted.equals(current.name)){current=definition.animations.get(wanted);time=0;}}
+        if(time>=current.length){if("loop".equals(current.loop)){time%=current.length;for(Event e:old.events)if(e.time<=time)fired.add(e);}else if("hold".equals(current.loop))time=current.length;else{current=null;time=0;play(locomotion);}}
         return fired;
     }
     public Pose pose(Bone bone){

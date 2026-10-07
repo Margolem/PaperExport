@@ -1,6 +1,6 @@
 plugins { java }
 group = "dev.paperexport"
-version = "1.0.1"
+version = "1.0.2"
 repositories { maven("https://repo.papermc.io/repository/maven-public/"); mavenCentral() }
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
@@ -13,9 +13,9 @@ dependencies {
 }
 tasks.withType<JavaCompile> { options.release.set(21); options.encoding = "UTF-8" }
 tasks.test { useJUnitPlatform() }
-tasks.jar { archiveFileName.set("PaperExport-Paper-1.0.1.jar") }
+tasks.jar { archiveFileName.set("PaperExport-Paper-1.0.2.jar") }
 tasks.register<Jar>("apiJar") {
-    archiveFileName.set("PaperExport-API-1.0.1.jar")
+    archiveFileName.set("PaperExport-API-1.0.2.jar")
     from(sourceSets.main.get().output)
     include("dev/paperexport/api/**")
     dependsOn(tasks.classes)
