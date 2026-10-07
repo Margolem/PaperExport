@@ -1,5 +1,5 @@
 name: PaperExport
-version: 1.0.2
+version: 1.1.0
 main: dev.paperexport.PaperExportPlugin
 api-version: '1.21'
 description: Data-driven custom entities for Paper

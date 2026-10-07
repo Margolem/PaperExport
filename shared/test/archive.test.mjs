@@ -5,6 +5,10 @@ import JSZip from 'jszip';
 import {readArchive,preflightArchive,PackageError,sample,hierarchy,compileResourcePack,simplifyKeys,validateManifest,blockbenchToModelUv,modelToBlockbenchUv} from '../dist/index.js';
 
 const fixture=()=>readFile('../tests/fixtures/minimal.paperexport');
+test('step interpolation advances exactly at the next key',()=>{
+  const keys=[{time:0,value:[0,0,0],interpolation:'step'},{time:1,value:[10,0,0],interpolation:'step'},{time:2,value:[20,0,0]}];
+  assert.deepEqual(sample(keys,.999,[0,0,0]),[0,0,0]);assert.deepEqual(sample(keys,1,[0,0,0]),[10,0,0]);assert.deepEqual(sample(keys,2,[0,0,0]),[20,0,0]);
+});
 test('fixture roundtrip reads bones, hitboxes, textures, and animations',async()=>{const p=await readArchive(await fixture());assert.equal(p.model.bones.length,6);assert.equal(p.model.hitboxes.length,2);assert.equal(Object.keys(p.animations).length,5);assert.equal(p.files.get('textures/skin.png')[0],137);});
 test('portable and older compatibility markers are accepted',async()=>{const p=await readArchive(await fixture());assert.equal(p.manifest.paper_version,'1.21-26.3');validateManifest({...p.manifest,minecraft_version:'1.21.11',paper_version:'1.21.11'});});
 test('bad ZIP is rejected',()=>assert.throws(()=>preflightArchive(new Uint8Array([1,2,3])),PackageError));

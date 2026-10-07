@@ -25,6 +25,10 @@ public partial class MainWindow : Window
     private Point3D target = new(0, 0.8, 0);
     private Point lastMouse;
     private bool rotating, panning;
+    private string? openedPath;
+    private FileSystemWatcher? watcher;
+    private readonly System.Windows.Threading.DispatcherTimer reloadTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
+    private int reloadAttempts;
 
     public MainWindow()
     {
@@ -35,6 +39,14 @@ public partial class MainWindow : Window
         SceneViewport.Children.Add(scene.HitboxVisual);
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Open, (_, _) => OpenDialog()));
         InputBindings.Add(new KeyBinding(ApplicationCommands.Open, Key.O, ModifierKeys.Control));
+        CommandBindings.Add(new CommandBinding(NavigationCommands.Refresh, (_, _) => Reload_Click(this, new RoutedEventArgs())));
+        InputBindings.Add(new KeyBinding(NavigationCommands.Refresh, Key.F5, ModifierKeys.None));
+        reloadTimer.Tick += (_, _) =>
+        {
+            reloadTimer.Stop();
+            if (AutoReloadCheck.IsChecked != true || openedPath is null) return;
+            if (!OpenPackage(openedPath, preserveView: true, quiet: true) && ++reloadAttempts < 8) reloadTimer.Start();
+        };
         CompositionTarget.Rendering += RenderFrame;
         Loaded += (_, _) =>
         {
@@ -47,7 +59,7 @@ public partial class MainWindow : Window
             if (screenshot >= 0 && screenshot + 1 < args.Length)
                 _ = SaveScreenshot(args[screenshot + 1]);
         };
-        Closed += (_, _) => CompositionTarget.Rendering -= RenderFrame;
+        Closed += (_, _) => { CompositionTarget.Rendering -= RenderFrame; watcher?.Dispose(); reloadTimer.Stop(); };
     }
 
     private void OpenDialog()
@@ -60,17 +72,19 @@ public partial class MainWindow : Window
         };
         if (dialog.ShowDialog(this) == true) OpenPackage(dialog.FileName);
     }
-    private void OpenPackage(string path)
+    private bool OpenPackage(string path, bool preserveView = false, bool quiet = false)
     {
         try
         {
             var loaded = PackageReader.Load(path);
-            package = loaded;
+            var previousAnimation = animation?.Name;
+            var previousTime = elapsed;
+            var previousPlaying = playing;
             scene.Build(loaded);
+            package = loaded;
             scene.SetHitbox(HitboxCheck.IsChecked == true);
             scene.SetPivots(PivotsCheck.IsChecked == true);
-            target = scene.Center;
-            ResetCamera();
+            if (!preserveView) ResetCamera();
             EmptyMessage.Visibility = Visibility.Collapsed;
             EntityName.Text = loaded.Manifest.Name;
             EntityId.Text = loaded.Manifest.Id;
@@ -89,6 +103,15 @@ public partial class MainWindow : Window
                 AnimationList.Items.Add(new AnimationItem(item));
             if (AnimationList.Items.Count > 0) AnimationList.SelectedIndex = 0;
             else { animation = null; playing = false; elapsed = 0; }
+            if (preserveView)
+            {
+                AnimationList.SelectedItem = AnimationList.Items.Cast<AnimationItem>().FirstOrDefault(item => item.Animation.Name == previousAnimation);
+                animation = (AnimationList.SelectedItem as AnimationItem)?.Animation;
+                elapsed = Math.Min(previousTime, animation?.Length ?? 0);
+                playing = previousPlaying && animation is not null;
+                PlayButton.Content = playing ? "Pause" : "Play";
+                scene.ApplyPose(loaded, animation, elapsed);
+            }
             ValidationText.Text = $"✓ Manifest and archive valid\n" +
                 $"✓ {loaded.Model.Bones.Count} bones\n" +
                 $"✓ {loaded.Manifest.Textures.Count} textures\n" +
@@ -103,12 +126,40 @@ public partial class MainWindow : Window
             FilePreview.Clear();
             StatusText.Text = $"{loaded.FileName} · {loaded.DisplayNodes} display nodes · Valid";
             Title = $"{loaded.FileName} - PaperExport Viewer";
+            if (!preserveView) WatchPackage(path);
+            return true;
         }
         catch (Exception error)
         {
             StatusText.Text = error.Message;
-            MessageBox.Show(this, error.Message, "Could not open package", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (!quiet) MessageBox.Show(this, error.Message, "Could not open package", MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
         }
+    }
+    private void WatchPackage(string path)
+    {
+        reloadTimer.Stop();
+        watcher?.Dispose();
+        openedPath = Path.GetFullPath(path);
+        watcher = new FileSystemWatcher(Path.GetDirectoryName(openedPath)!, Path.GetFileName(openedPath))
+        {
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName
+        };
+        void Changed(object? sender, FileSystemEventArgs e)
+        {
+            if (Dispatcher.HasShutdownStarted) return;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (AutoReloadCheck.IsChecked != true) return;
+                reloadAttempts = 0;
+                reloadTimer.Stop();
+                reloadTimer.Start();
+            }));
+        }
+        watcher.Changed += Changed;
+        watcher.Created += Changed;
+        watcher.Renamed += (sender, e) => Changed(sender, e);
+        watcher.EnableRaisingEvents = true;
     }
     private void FillHierarchy(PaperPackage loaded)
     {
@@ -204,7 +255,7 @@ public partial class MainWindow : Window
         if (package is null || animation is null) return;
         if (playing)
         {
-            var speed = double.TryParse((SpeedBox.SelectedItem as ComboBoxItem)?.Tag?.ToString(), out var value) ? value : 1;
+            var speed = double.TryParse((SpeedBox.SelectedItem as ComboBoxItem)?.Tag?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : 1;
             elapsed += dt * speed;
             if (elapsed >= animation.Length)
             {
@@ -298,6 +349,16 @@ public partial class MainWindow : Window
     private void Open_Click(object sender, RoutedEventArgs e) => OpenDialog();
     private void Exit_Click(object sender, RoutedEventArgs e) => Close();
     private void Reset_Click(object sender, RoutedEventArgs e) => ResetCamera();
+    private void Reload_Click(object sender, RoutedEventArgs e) { if (openedPath is not null) OpenPackage(openedPath, preserveView: true); }
+    private void Front_Click(object sender, RoutedEventArgs e) { yaw = Math.PI; pitch = 0; UpdateCamera(); }
+    private void Back_Click(object sender, RoutedEventArgs e) { yaw = 0; pitch = 0; UpdateCamera(); }
+    private void Rest_Click(object sender, RoutedEventArgs e)
+    {
+        AnimationList.SelectedIndex = -1;
+        animation = null; playing = false; elapsed = 0;
+        Timeline.Value = 0; TimeText.Text = "Rest pose"; PlayButton.Content = "Play";
+        if (package is not null) scene.ApplyPose(package, null, 0);
+    }
     private void Play_Click(object sender, RoutedEventArgs e)
     {
         if (animation is null) return;

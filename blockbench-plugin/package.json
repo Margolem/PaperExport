@@ -1,8 +1,8 @@
 {
   "name": "@paperexport/blockbench-plugin",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "private": true,
   "scripts": {"build": "node scripts/build.mjs"},
-  "dependencies": {"@paperexport/shared": "1.0.2"},
+  "dependencies": {"@paperexport/shared": "1.1.0"},
   "devDependencies": {"esbuild": "^0.25.12"}
 }

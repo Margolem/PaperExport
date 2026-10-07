@@ -33,9 +33,10 @@ restRotation * restScale`. Display transformations use JOML matrices. The
 viewer applies the same tree. Cubes in a bone are combined in one item model.
 
 Minecraft's block/item model JSON has element rotation restrictions. The
-exporter rejects individual cube rotations it cannot represent losslessly;
-bone rotations remain unrestricted because they run on display entities.
-This explicit validation avoids quietly producing a different model.
+exporter moves each rotated cube into a child bone at the cube's pivot.
+Bone rotations remain unrestricted because they run on display entities.
+Inflation is baked into cube bounds; zero-thickness axes become 0.01 units thick.
+Extra rotation bones increase display count, which export validation reports.
 
 ## Package and trust boundary
 

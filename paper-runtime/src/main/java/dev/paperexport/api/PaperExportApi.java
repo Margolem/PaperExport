@@ -21,6 +21,7 @@ public interface PaperExportApi {
     }
     Collection<EntityInfo> entities();
     Entity spawn(String entityId, Location location);
+    /** Returns false for unknown mobs/animations or a higher-priority animation that is still playing. */
     boolean playAnimation(Entity controller, String animation);
     boolean playSound(Entity controller, String soundName);
     String entityId(Entity controller);

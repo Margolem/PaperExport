@@ -1,7 +1,7 @@
 import type {Bone, EntityAnimation, Keyframe, Model, Vec3} from './types.js';
 export function sample(keys:Keyframe[]|undefined,time:number,fallback:Vec3):Vec3 {
   if(!keys?.length)return [...fallback] as Vec3;if(time<=keys[0].time)return [...keys[0].value] as Vec3;
-  for(let i=1;i<keys.length;i++)if(time<=keys[i].time){const a=keys[i-1],b=keys[i];const t=a.interpolation==='step'?0:(time-a.time)/(b.time-a.time);return a.value.map((v,j)=>v+(b.value[j]-v)*t) as Vec3;}
+  for(let i=1;i<keys.length;i++)if(time<keys[i].time){const a=keys[i-1],b=keys[i];const t=a.interpolation==='step'?0:(time-a.time)/(b.time-a.time);return a.value.map((v,j)=>v+(b.value[j]-v)*t) as Vec3;}
   return [...keys[keys.length-1].value] as Vec3;
 }
 export function sampleBone(animation:EntityAnimation|undefined,bone:Bone,time:number):{position:Vec3;rotation:Vec3;scale:Vec3} {

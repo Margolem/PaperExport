@@ -9,14 +9,14 @@ await run('npm',['run','build']);
 await run(win?'gradlew.bat':'./gradlew',['test','jar','apiJar','--no-daemon'],join(process.cwd(),'paper-runtime'));
 await mkdir('dist',{recursive:true});
 await rm('dist/test_dummy.paperexport',{force:true});
-await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.0.2.jar','dist/PaperExport-Paper-1.0.2.jar');
-await copyFile('paper-runtime/build/libs/PaperExport-API-1.0.2.jar','dist/PaperExport-API-1.0.2.jar');
-for(const old of ['PaperExport-Paper-1.0.0.jar','PaperExport-API-1.0.0.jar','PaperExport-Paper-1.0.1.jar','PaperExport-API-1.0.1.jar'])await rm(join('dist',old),{force:true});
+await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.1.0.jar','dist/PaperExport-Paper-1.1.0.jar');
+await copyFile('paper-runtime/build/libs/PaperExport-API-1.1.0.jar','dist/PaperExport-API-1.1.0.jar');
+for(const old of ['PaperExport-Paper-1.0.0.jar','PaperExport-API-1.0.0.jar','PaperExport-Paper-1.0.1.jar','PaperExport-API-1.0.1.jar','PaperExport-Paper-1.0.2.jar','PaperExport-API-1.0.2.jar'])await rm(join('dist',old),{force:true});
 if(win){
   await run('dotnet',['run','--project','viewer-native-tests/PaperExport.Viewer.Tests.csproj','-c','Release']);
   await run('dotnet',['publish','viewer/PaperExport.Viewer.csproj','-c','Release','-o','viewer/release-build']);
   await copyFile('viewer/release-build/PaperExport Viewer.exe','dist/PaperExport-Viewer-Windows.exe');
   for(const old of ['PaperExport Viewer 1.0.0.exe','PaperExport Viewer Setup 1.0.0.exe'])await rm(join('dist',old),{force:true});
 }
-console.log('\nArtifacts: dist/paperexport.js + dist/icon.png, dist/PaperExport-Paper-1.0.2.jar, dist/PaperExport-API-1.0.2.jar');
+console.log('\nArtifacts: dist/paperexport.js + dist/icon.png, dist/PaperExport-Paper-1.1.0.jar, dist/PaperExport-API-1.1.0.jar');
 if(win)console.log('Native C# viewer: dist/PaperExport-Viewer-Windows.exe');

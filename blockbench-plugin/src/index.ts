@@ -1,10 +1,14 @@
 import {writeArchive,PackageError} from '@paperexport/shared';
 import {captureProject} from './convert.js';
 import {openPackage} from './importer.js';
-import {state} from './state.js';
+import {state,saveState,loadState} from './state.js';
 import logo from '../../assets/paperexport.png';
 
 let format:any,codec:any,panel:any;const actions:any[]=[];
+const properties:any[]=[];
+function refreshPanel():void {if(panel?.vue)panel.vue.s=state();if(panel?.inside_vue)panel.inside_vue.s=state();}
+function saveProject(event:any):void {if(Format?.id==='paperexport')event.model.paperexport=saveState();}
+function loadProject(event:any):void {if(Format?.id==='paperexport'){try{loadState(event.model.paperexport);}catch(error){message(error);}refreshPanel();}}
 const thumbnails=new Map<string,Uint8Array>();
 function thumbnail():Promise<Uint8Array>{return new Promise((resolve,reject)=>{try{Screencam.cleanCanvas({width:256,height:256},(url:string)=>{try{const encoded=url.split(',')[1];if(!encoded)throw new Error('No screenshot data');resolve(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)));}catch(e){reject(e);}});}catch(e){reject(e);}});}
 const message=(e:unknown)=>Blockbench.showMessageBox({title:'PaperExport',message:e instanceof Error?e.message:String(e)});
@@ -55,12 +59,18 @@ function addPanel():void {
     </div>`,methods:{validate:validation,exportIt:exportFile,importSound(){importSound(this);},removeSound(name:string){const next={...this.s.sounds};delete next[name];this.s.sounds=next;},addPhase(){const phases=this.s.entity.boss.phases;this.s.entity.boss.phases=[...phases,{below_health:phases.length?Math.max(.01,Number((phases[phases.length-1].below_health-.2).toFixed(2))):.5,animation:'',sound:''}];},removePhase(index:number){this.s.entity.boss.phases=this.s.entity.boss.phases.filter((_:unknown,i:number)=>i!==index);}}
   }});
 }
-Plugin.register('paperexport',{title:'PaperExport',author:'PaperExport contributors',description:'Create vanilla-client custom entities for Paper 1.21.x–26.x',icon:'icon.png',version:'1.0.2',min_version:'4.8.0',variant:'both',onload(){
+Plugin.register('paperexport',{title:'PaperExport',author:'PaperExport contributors',description:'Create vanilla-client custom entities for Paper 1.21.x–26.x',icon:'icon.png',version:'1.1.0',min_version:'4.8.0',variant:'both',onload(){
+  properties.push(new Property(Group,'vector','paperexportScale',{default:[1,1,1]}),
+    new Property(Cube,'string','paperexportHitboxId',{default:''}),
+    new Property(Animation,'array','paperexportEvents',{default:[]}),
+    new Property(Animation,'number','paperexportPriority',{default:-1001}));
+  Codecs.project.on('compile',saveProject);Codecs.project.on('parse',loadProject);
+  Blockbench.on('select_project',refreshPanel);Blockbench.on('paperexport_state',refreshPanel);
   codec=new Codec('paperexport',{name:'PaperExport package',extension:'paperexport',remember:false,compile:captureProject,parse:(data:any)=>{void openPackage(new Uint8Array(data),format);},export:()=>{void exportFile();}});
-  format=new ModelFormat('paperexport',{name:'PaperMC Custom Entity',description:'Animated display-entity model for Paper 1.21.x–26.x',icon:'view_in_ar',category:'minecraft',target:['Minecraft: Java Edition'],show_on_start_screen:true,codec,bone_rig:true,rotate_cubes:false,meshes:false,animation_mode:true,animation_files:false,optional_box_uv:true,uv_rotation:true,single_texture:false,per_texture_uv_size:false,render_sides:'front',forward_direction:'-z',euler_order:'ZYX'});codec.format=format;
+  format=new ModelFormat('paperexport',{name:'PaperMC Custom Entity',description:'Animated display-entity model for Paper 1.21.x–26.x',icon:'view_in_ar',category:'minecraft',target:['Minecraft: Java Edition'],show_on_start_screen:true,codec,bone_rig:true,rotate_cubes:true,meshes:false,animation_mode:true,animation_files:false,optional_box_uv:true,uv_rotation:true,single_texture:false,per_texture_uv_size:false,render_sides:'front',forward_direction:'-z',euler_order:'ZYX'});codec.format=format;
   addPanel();addAction('paperexport_export','Export Paper Entity (.paperexport)','file_download',()=>{void exportFile();});
   const imp=new Action('paperexport_import',{name:'Open Paper Entity (.paperexport)',icon:'folder_open',click:importFile});actions.push(imp);MenuBar.addAction(imp,'file.import');
   const val=new Action('paperexport_validate',{name:'Validate Paper Entity',icon:'fact_check',condition:()=>Format?.id==='paperexport',click:validation});actions.push(val);MenuBar.addAction(val,'tools');
   const shot=new Action('paperexport_thumbnail',{name:'Set Current View as Thumbnail',icon:'photo_camera',condition:()=>Format?.id==='paperexport',click:()=>{void setThumbnail();}});actions.push(shot);MenuBar.addAction(shot,'tools');
   const opt=new Action('paperexport_optimize',{name:'Optimize for Paper',icon:'tune',condition:()=>Format?.id==='paperexport',click:()=>{try{const p=captureProject();Blockbench.showMessageBox({title:'Optimize for Paper',message:`Geometry is grouped into ${p.model.bones.filter(b=>b.cubes.length).length} display nodes. Redundant animation keys are removed during export without changing the project.`});}catch(e){message(e);}}});actions.push(opt);MenuBar.addAction(opt,'tools');
-},onunload(){for(const a of actions)a.delete();panel?.delete();format?.delete();codec?.delete();}});
+},onunload(){Codecs.project.removeListener('compile',saveProject);Codecs.project.removeListener('parse',loadProject);Blockbench.removeListener('select_project',refreshPanel);Blockbench.removeListener('paperexport_state',refreshPanel);for(const a of actions)a.delete();for(const p of properties)p.delete();panel?.delete();format?.delete();codec?.delete();}});

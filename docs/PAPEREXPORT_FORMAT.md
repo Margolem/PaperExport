@@ -49,7 +49,7 @@ actual output sizes afterward. It should verify the ZIP CRC.
   "id":"example:creature", "name":"Example Creature",
   "author":"PaperExport contributors", "description":"Example entity",
   "minecraft_version":"1.21-26.3", "paper_version":"1.21-26.3",
-  "exporter_version":"1.0.2",
+  "exporter_version":"1.1.0",
   "model":"model/model.json", "entity":"entity/entity.json",
   "animations":{"idle":"animations/idle.json"},
   "textures":{"skin":{"path":"textures/skin.png","width":16,"height":16}},

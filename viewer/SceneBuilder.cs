@@ -101,17 +101,14 @@ public sealed class SceneBuilder
             hitbox = hitboxRoot;
         }
         HitboxVisual.Content = null;
-        var points = package.Model.Bones.SelectMany(b => b.Cubes)
-            .SelectMany(c => new[] { c.From, c.To }).ToArray();
-        if (points.Length > 0)
-        {
-            double minX = points.Min(p => p[0]) / 16, maxX = points.Max(p => p[0]) / 16;
-            double minY = points.Min(p => p[1]) / 16, maxY = points.Max(p => p[1]) / 16;
-            double minZ = points.Min(p => p[2]) / 16, maxZ = points.Max(p => p[2]) / 16;
-            Center = new Point3D((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
-            Size = Math.Max(1.5, Math.Sqrt(Math.Pow(maxX - minX, 2) + Math.Pow(maxY - minY, 2) + Math.Pow(maxZ - minZ, 2)));
-        }
         ApplyPose(package, null, 0);
+        var bounds = root.Bounds;
+        if (!bounds.IsEmpty)
+        {
+            Center = new Point3D(bounds.X + bounds.SizeX / 2, bounds.Y + bounds.SizeY / 2, bounds.Z + bounds.SizeZ / 2);
+            Size = Math.Max(1.5, Math.Sqrt(bounds.SizeX * bounds.SizeX + bounds.SizeY * bounds.SizeY + bounds.SizeZ * bounds.SizeZ));
+        }
+        else { Center = new Point3D(0, .8, 0); Size = 2; }
     }
 
     public void SetGrid(bool visible)
@@ -165,7 +162,7 @@ public sealed class SceneBuilder
         if (time <= keys[0].Time) return keys[0].Value;
         for (int i = 1; i < keys.Count; i++)
         {
-            if (time > keys[i].Time) continue;
+            if (time >= keys[i].Time) continue;
             var a = keys[i - 1];
             var b = keys[i];
             var factor = a.Interpolation == "step" ? 0 : (time - a.Time) / (b.Time - a.Time);
@@ -179,7 +176,7 @@ public sealed class SceneBuilder
         if (time <= keys[0].Time) return Euler(keys[0].Value);
         for (int i = 1; i < keys.Count; i++)
         {
-            if (time > keys[i].Time) continue;
+            if (time >= keys[i].Time) continue;
             var a = keys[i - 1];
             var b = keys[i];
             var factor = a.Interpolation == "step" ? 0 : (time - a.Time) / (b.Time - a.Time);

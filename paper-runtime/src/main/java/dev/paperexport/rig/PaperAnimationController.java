@@ -12,23 +12,35 @@ public final class PaperAnimationController {
     private final PaperEntityDefinition definition;
     private Animation current;
     private double time;
+    private boolean starting;
     public PaperAnimationController(PaperEntityDefinition definition){this.definition=definition;play("idle");}
     public String name(){return current==null?"none":current.name;}
     public double time(){return time;}
     public Animation current(){return current;}
-    public void play(String name){Animation next=definition.animations.get(name);if(next==null)return;if(current==next&&"loop".equals(next.loop))return;if(current!=null&&current.priority>next.priority&&time<current.length&& !"loop".equals(current.loop))return;current=next;time=0;}
-    public void force(String name){Animation next=definition.animations.get(name);if(next!=null){current=next;time=0;}}
+    public boolean play(String name){Animation next=definition.animations.get(name);if(next==null)return false;if(current==next&&"loop".equals(next.loop))return true;if(current!=null&&current.priority>next.priority&&time<current.length&& !"loop".equals(current.loop))return false;current=next;time=0;starting=true;return true;}
+    public void force(String name){Animation next=definition.animations.get(name);if(next!=null){current=next;time=0;starting=true;}}
     public List<Event> advance(double seconds,boolean moving){
+        if(!Double.isFinite(seconds)||seconds<0)throw new IllegalArgumentException("Animation delta must be finite and nonnegative");
         String locomotion=moving&&definition.animations.containsKey("walk")?"walk":"idle";
         if(current==null)play(locomotion);
         if(current==null)return List.of();
         if(current.name.equals("idle")||current.name.equals("walk")||current.name.equals("run")){
             if(!current.name.equals(locomotion))force(locomotion);
         }
-        Animation old=current;double from=time;time+=seconds;List<Event> fired=new ArrayList<>();
-        for(Event e:old.events)if(e.time>from&&e.time<=Math.min(time,old.length))fired.add(e);
-        if(time>=current.length){if("loop".equals(current.loop)){time%=current.length;for(Event e:old.events)if(e.time<=time)fired.add(e);}else if("hold".equals(current.loop))time=current.length;else{current=null;time=0;play(locomotion);}}
+        Animation old=current;double end=time+seconds;List<Event> fired=new ArrayList<>();
+        if("loop".equals(old.loop)){
+            // Split at each wrap so end-of-loop and time-zero events fire once, in order.
+            double from=time;
+            while(end>=old.length){collect(old,from,old.length,starting,fired);starting=true;end-=old.length;from=0;}
+            collect(old,from,end,starting,fired);time=end;starting=false;
+        }else{
+            collect(old,time,Math.min(end,old.length),starting,fired);starting=false;time=Math.min(end,old.length);
+            if(end>=old.length&&!"hold".equals(old.loop)){current=null;time=0;play(locomotion);}
+        }
         return fired;
+    }
+    private static void collect(Animation animation,double from,double to,boolean includeStart,List<Event> fired){
+        for(Event event:animation.events)if((event.time>from||(includeStart&&event.time==from))&&event.time<=to)fired.add(event);
     }
     public Pose pose(Bone bone){
         if(current==null)return new Pose(new Vector3f(),new Quaternionf(),new Vector3f(1,1,1));
@@ -39,13 +51,13 @@ public final class PaperAnimationController {
     public static Vector3f sample(List<Key> keys,double time,Vector3f fallback){
         if(keys==null||keys.isEmpty())return new Vector3f(fallback);
         if(time<=keys.getFirst().time)return vec(keys.getFirst().value);
-        for(int i=1;i<keys.size();i++)if(time<=keys.get(i).time){Key a=keys.get(i-1),b=keys.get(i);float f="step".equals(a.interpolation)?0:(float)((time-a.time)/(b.time-a.time));return vec(a.value).lerp(vec(b.value),f);}
+        for(int i=1;i<keys.size();i++)if(time<keys.get(i).time){Key a=keys.get(i-1),b=keys.get(i);float f="step".equals(a.interpolation)?0:(float)((time-a.time)/(b.time-a.time));return vec(a.value).lerp(vec(b.value),f);}
         return vec(keys.getLast().value);
     }
     public static Quaternionf sampleRotation(List<Key> keys,double time){
         if(keys==null||keys.isEmpty())return new Quaternionf();
         if(time<=keys.getFirst().time)return quat(keys.getFirst().value);
-        for(int i=1;i<keys.size();i++)if(time<=keys.get(i).time){Key a=keys.get(i-1),b=keys.get(i);float f="step".equals(a.interpolation)?0:(float)((time-a.time)/(b.time-a.time));return quat(a.value).slerp(quat(b.value),f);}
+        for(int i=1;i<keys.size();i++)if(time<keys.get(i).time){Key a=keys.get(i-1),b=keys.get(i);float f="step".equals(a.interpolation)?0:(float)((time-a.time)/(b.time-a.time));return quat(a.value).slerp(quat(b.value),f);}
         return quat(keys.getLast().value);
     }
     private static Vector3f vec(double[] v){return new Vector3f((float)v[0],(float)v[1],(float)v[2]);}

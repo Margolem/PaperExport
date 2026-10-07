@@ -2,6 +2,12 @@ resource-pack:
   mode: external
   url: ''
   required: false
+  # Set mode to hosted for the built-in pack server. Loopback works on this PC.
+  # For remote players, set bind and public-url to a reachable server address.
+  host:
+    bind: 127.0.0.1
+    port: 8766
+    public-url: ''
 animation:
   update-ticks: 2
   far-distance: 48

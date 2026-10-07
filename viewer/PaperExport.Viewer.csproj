@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>PaperExport Viewer</AssemblyName>
     <RootNamespace>PaperExport.Viewer</RootNamespace>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
     <ApplicationIcon>assets/paperexport.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>

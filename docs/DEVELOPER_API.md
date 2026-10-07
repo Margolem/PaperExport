@@ -4,14 +4,14 @@ PaperExport Runtime provides a small Java API through Bukkit's service
 manager. Your plugin runs on Paper and declares `depend: [PaperExport]`.
 The API is available only while the PaperExport plugin is installed and enabled.
 
-Compile against [PaperExport-API-1.0.2.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/PaperExport-API-1.0.2.jar)
+Compile against [PaperExport-API-1.1.0.jar](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-API-1.1.0.jar)
 and a Paper API for your development version. Use `compileOnly` for both.
 The runtime JAR already provides the API classes on the server.
 
 ```kotlin
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnly(files("../dist/PaperExport-API-1.0.2.jar"))
+    compileOnly(files("../dist/PaperExport-API-1.1.0.jar"))
 }
 ```
 
@@ -34,6 +34,9 @@ The public interface is `dev.paperexport.api.PaperExportApi`. It offers
 packages. Call it on the
 server's main thread. `spawn` returns the invisible vanilla controller
 entity; PaperExport manages its visible display rig.
+`playAnimation` returns `false` if the mob/animation is unknown or a higher
+priority animation is still playing. A request for an already-running loop
+returns `true` without restarting that loop.
 
 For abilities and custom boss logic, put a `custom_event` keyframe in an
 animation with a namespaced `data.key`, such as `demo:shockwave`. Your

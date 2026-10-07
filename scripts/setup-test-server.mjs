@@ -33,7 +33,11 @@ if(!valid){
     await rename(file,jar);
   }catch(error){await rm(file,{force:true});throw error;}
 }
-await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.0.2.jar',resolve(root,'plugins','PaperExport.jar'));
+await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.1.0.jar',resolve(root,'plugins','PaperExport.jar'));
+const pluginConfig=resolve(root,'plugins','PaperExport','config.yml');
+try{await readFile(pluginConfig);}catch{
+  await writeFile(pluginConfig,'resource-pack:\n  mode: hosted\n  required: false\n  host:\n    bind: 127.0.0.1\n    port: 8766\n    public-url: ""\nanimation:\n  update-ticks: 2\n  far-distance: 48\nevents:\n  allow-package-damage: false\n');
+}
 const properties=resolve(root,'server.properties');
 try{await readFile(properties);}catch{
   await writeFile(properties,'server-ip=127.0.0.1\nserver-port=25566\nlevel-name=test-world\nmax-players=4\nspawn-protection=0\nonline-mode=true\nmotd=PaperExport local test\n');

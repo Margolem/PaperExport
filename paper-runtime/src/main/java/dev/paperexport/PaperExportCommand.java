@@ -17,7 +17,7 @@ public final class PaperExportCommand implements CommandExecutor,TabCompleter {
     public PaperExportCommand(PaperExportPlugin plugin){this.plugin=plugin;}
     private void say(CommandSender sender,String message){sender.sendMessage(Component.text(message,NamedTextColor.AQUA));}
     @Override public boolean onCommand(CommandSender sender,Command command,String label,String[] args){
-        if(args.length==0||"help".equalsIgnoreCase(args[0])){say(sender,"/pe list | info <id> | spawn <id> [amount] | kill <id> | reload | validate | pack | debug");return true;}
+        if(args.length==0||"help".equalsIgnoreCase(args[0])){say(sender,"/pe list | info <id> | spawn <id> [amount] | kill <id> | reload | validate | pack [send] | debug | doctor");return true;}
         String sub=args[0].toLowerCase(java.util.Locale.ROOT);
         boolean allowed=switch(sub){case "spawn"->sender.hasPermission("paperexport.spawn");case "reload","validate","pack"->sender.hasPermission("paperexport.reload");case "debug"->sender.hasPermission("paperexport.debug");default->sender.hasPermission("paperexport.admin");};
         if(!allowed){say(sender,"Missing permission.");return true;}
@@ -28,14 +28,16 @@ public final class PaperExportCommand implements CommandExecutor,TabCompleter {
             case "kill"->{if(args.length<2){say(sender,"Usage: /pe kill <id>");break;}int killed=0;for(var world:plugin.getServer().getWorlds())for(var entity:world.getEntities()){String id=entity.getPersistentDataContainer().get(plugin.entityKey(),org.bukkit.persistence.PersistentDataType.STRING);if(args[1].equals(id)){plugin.ticker().remove(entity);entity.remove();killed++;}}say(sender,"Removed "+killed+" instances of "+args[1]);}
             case "reload"->say(sender,plugin.reloadDefinitions());
             case "validate"->say(sender,plugin.validateFiles());
-            case "pack"->say(sender,plugin.rebuildPack());
+            case "pack"->{if(args.length>1&&"send".equalsIgnoreCase(args[1])){if(sender instanceof Player player){plugin.sendPack(player);say(sender,plugin.packUrl().isBlank()?"Pack URL is not configured. Run /pe doctor.":"Pack requested: "+plugin.packUrl());}else say(sender,"Pack send requires a player");}else say(sender,plugin.rebuildPack());}
+            case "doctor"->{say(sender,plugin.diagnostics());say(sender,plugin.validateFiles());}
             case "debug"->{if(!sender.hasPermission("paperexport.debug")){say(sender,"Missing paperexport.debug permission");break;}say(sender,"Active: "+plugin.ticker().activeCount()+" · Displays: "+plugin.ticker().displayCount()+" · Mean tick: "+String.format(java.util.Locale.ROOT,"%.3f",plugin.ticker().averageMillis())+" ms");}
             default->say(sender,"Unknown subcommand. Run /pe help");
         }
         return true;
     }
     @Override public List<String> onTabComplete(CommandSender sender,Command command,String alias,String[] args){
-        if(args.length==1)return Arrays.stream(new String[]{"help","list","info","spawn","kill","reload","validate","pack","debug"}).filter(s->s.startsWith(args[0].toLowerCase(java.util.Locale.ROOT))).toList();
+        if(args.length==1)return Arrays.stream(new String[]{"help","list","info","spawn","kill","reload","validate","pack","debug","doctor"}).filter(s->s.startsWith(args[0].toLowerCase(java.util.Locale.ROOT))).toList();
+        if(args.length==2&&"pack".equalsIgnoreCase(args[0]))return "send".startsWith(args[1])?List.of("send"):List.of();
         if(args.length==2&&List.of("info","spawn","kill").contains(args[0].toLowerCase(java.util.Locale.ROOT)))return plugin.registry().all().stream().map(d->d.manifest.id).filter(s->s.startsWith(args[1])).toList();
         return List.of();
     }

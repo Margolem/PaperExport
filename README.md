@@ -42,7 +42,7 @@ No client mod is required.
 
 ## Installing the Blockbench plugin
 
-Keep [paperexport.js](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/paperexport.js) and [icon.png](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/icon.png) in the
+Keep [paperexport.js](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/paperexport.js) and [icon.png](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/icon.png) in the
 same folder, then install `paperexport.js` as a local
 Blockbench plugin using **File → Plugins → Load Plugin from File**. In Blockbench,
 choose **File → New → PaperMC Custom Entity**. The Paper Entity panel appears
@@ -70,14 +70,17 @@ plugin includes a test dummy, a ghost giant, and a 128x128 HD model sample.
 Export creates one ZIP-based `.paperexport` containing the model, PNGs,
 animations, entity settings, a thumbnail, and compiled pack assets. The
 runtime adapts those assets for the installed Paper version.
-It rejects unsupported cube rotations, nonnumeric expressions and animation
-interpolation other than linear/step instead of silently changing the model.
+Rotated cubes become child bones automatically; inflation is baked into bounds
+and flat cubes receive 0.01 units of thickness. It rejects nonnumeric expressions
+and animation interpolation other than linear/step.
+Saved `.bbmodel` projects retain entity settings and bundled sounds. Imported
+packages retain animation events, priorities, rest scales, and hitbox IDs.
 It combines cubes per bone and removes redundant animation keys. See the
 [format specification](docs/PAPEREXPORT_FORMAT.md).
 
 ## Installing PaperExport Runtime
 
-1. Copy [PaperExport-Paper-1.0.2.jar](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/PaperExport-Paper-1.0.2.jar) to
+1. Copy [PaperExport-Paper-1.1.0.jar](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-Paper-1.1.0.jar) to
    `plugins/` on a supported Paper server. The same JAR works across the range.
 2. Start once. PaperExport creates `plugins/PaperExport/entities/`,
    `generated/`, `resourcepack/`, `cache/`, `logs/`, and `config.yml`.
@@ -95,22 +98,34 @@ It combines cubes per bone and removes redundant animation keys. See the
 7. Run `/pe spawn namespace:monster`.
 
 `/pe list`, `/pe info <id>`, `/pe spawn <id> [1–32]`, `/pe kill <id>`,
-`/pe reload`, `/pe validate`, `/pe pack`, and `/pe debug` are available.
+`/pe reload`, `/pe validate`, `/pe pack`, `/pe pack send`, `/pe doctor`, and `/pe debug` are available.
 Permissions: `paperexport.admin`, `paperexport.spawn`, `paperexport.reload`,
 `paperexport.debug`. The pack mode `external` sends an HTTPS URL plus the
-generated SHA-1; `disabled` only writes the ZIP. Embedded hosting is not
-implemented. Existing instances retain their definition after reload and
+generated SHA-1; `disabled` only writes the ZIP. Set mode to `hosted` to serve
+the generated pack directly from PaperExport. Existing instances retain their definition after reload and
 should be respawned when models change.
+
+For testing on the same PC, set `resource-pack.mode: hosted` and run `/pe reload`.
+The default address is `127.0.0.1:8766`; no separate Python server is needed.
+For remote players, configure `resource-pack.host.bind`, `port`, and `public-url`
+with an address the players can reach. `public-url` is a base URL without a ZIP
+filename. PaperExport appends a hash-specific path and sends the pack on join
+or reload. `/pe doctor` shows the actual URL and package validation results.
+Leave `server.properties` resource-pack empty when PaperExport manages delivery.
 
 ## Viewer
 
 Run `dotnet run --project viewer/PaperExport.Viewer.csproj -- path/to/mob.paperexport`
 for development. `build-all.bat` publishes a self-contained Windows executable
-at [PaperExport-Viewer-Windows.exe](https://github.com/Margolem/PaperExport/releases/download/v1.0.2/PaperExport-Viewer-Windows.exe).
+at [PaperExport-Viewer-Windows.exe](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-Viewer-Windows.exe).
 Open a `.paperexport` through File → Open, drag it onto the window, or pass
 its path as an argument. To add the viewer to Windows **Open with**, run
 `rtk powershell -NoProfile -File viewer/register-file-association.ps1`.
 Windows may ask you to choose it as the default app the first time.
+The viewer automatically reloads a changed file while retaining the camera and
+playback position. File → Reload (F5) reloads manually; the same menu lets you
+disable automatic reload. Rest pose stops animation, and View → Front/Back
+gives fixed views for checking model orientation.
 
 ## Local test server
 
@@ -124,7 +139,7 @@ local server binds to `127.0.0.1:25566`. See
 
 ## Plugin API
 
-Compile your plugin against `dist/PaperExport-API-1.0.2.jar` with `compileOnly`
+Compile your plugin against `dist/PaperExport-API-1.1.0.jar` with `compileOnly`
 and declare `depend: [PaperExport]` in `plugin.yml`. At runtime, obtain
 `PaperExportApi` from Bukkit's services manager. The API is registered only by
 the installed PaperExport plugin. It can list, spawn, animate, sound, despawn,

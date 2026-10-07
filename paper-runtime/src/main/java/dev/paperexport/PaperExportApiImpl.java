@@ -24,7 +24,7 @@ final class PaperExportApiImpl implements PaperExportApi {
     }
     @Override public boolean playAnimation(Entity controller,String animation){
         mainThread();var instance=plugin.ticker().get(controller);if(instance==null||!instance.definition.animations.containsKey(animation))return false;
-        instance.animation.play(animation);return true;
+        return instance.animation.play(animation);
     }
     @Override public boolean playSound(Entity controller,String soundName){
         mainThread();var instance=plugin.ticker().get(controller);return instance!=null&&plugin.playSound(instance,soundName);
