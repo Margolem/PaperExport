@@ -42,8 +42,7 @@ No client mod is required.
 
 ## Installing the Blockbench plugin
 
-Keep [paperexport.js](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/paperexport.js) and [icon.png](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/icon.png) in the
-same folder, then install `paperexport.js` as a local
+Download [PaperExport-Blockbench-1.1.0.zip](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-Blockbench-1.1.0.zip), unzip it, and keep `paperexport.js` and `icon.png` in the same folder. Install `paperexport.js` as a local
 Blockbench plugin using **File → Plugins → Load Plugin from File**. In Blockbench,
 choose **File → New → PaperMC Custom Entity**. The Paper Entity panel appears
 on the right.
@@ -62,8 +61,6 @@ the viewer, and Minecraft.
 To add attack regions, create cubes named exactly `pe_hitbox` inside bones.
 You may add several cubes with that name. They are exported as invisible
 interaction hitboxes and excluded from the visible resource-pack model.
-The separate [PaperExport Examples](https://github.com/Margolem/PaperExport-Examples)
-plugin includes a test dummy, a ghost giant, and a 128x128 HD model sample.
 
 ## Exporting `.paperexport`
 
@@ -127,19 +124,9 @@ playback position. File → Reload (F5) reloads manually; the same menu lets you
 disable automatic reload. Rest pose stops animation, and View → Front/Back
 gives fixed views for checking model orientation.
 
-## Local test server
-
-`node scripts/setup-test-server.mjs` downloads and verifies the latest stable
-Paper **1.21.11** build into `test-server/`. Pass a version, for example
-`node scripts/setup-test-server.mjs 26.2`, to use `test-servers/26.2/`.
-If only beta builds exist, add `--pre-release` explicitly. Review the
-Minecraft EULA in that server's `eula.txt`, then run its `start.ps1`. The
-local server binds to `127.0.0.1:25566`. See
-[test-server/README.md](test-server/README.md).
-
 ## Plugin API
 
-Compile your plugin against `dist/PaperExport-API-1.1.0.jar` with `compileOnly`
+Compile your plugin against the [PaperExport server JAR](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-Paper-1.1.0.jar) with `compileOnly`
 and declare `depend: [PaperExport]` in `plugin.yml`. At runtime, obtain
 `PaperExportApi` from Bukkit's services manager. The API is registered only by
 the installed PaperExport plugin. It can list, spawn, animate, sound, despawn,

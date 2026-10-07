@@ -13,8 +13,6 @@ dist/
 gradle-*-bin.zip
 *.log
 test-server/*
-!test-server/README.md
-!test-server/start.ps1
 test-server/paper.jar
 test-server/paper.jar.download
 test-server/plugins/
@@ -34,3 +32,4 @@ test-server/spigot.yml
 test-server/server.properties
 test-server/eula.txt
 test-servers/
+scripts/setup-test-server.mjs

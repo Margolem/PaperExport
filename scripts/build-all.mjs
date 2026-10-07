@@ -8,7 +8,6 @@ await run('npm',['test']);
 await run('npm',['run','build']);
 await run(win?'gradlew.bat':'./gradlew',['test','jar','apiJar','--no-daemon'],join(process.cwd(),'paper-runtime'));
 await mkdir('dist',{recursive:true});
-await rm('dist/test_dummy.paperexport',{force:true});
 await copyFile('paper-runtime/build/libs/PaperExport-Paper-1.1.0.jar','dist/PaperExport-Paper-1.1.0.jar');
 await copyFile('paper-runtime/build/libs/PaperExport-API-1.1.0.jar','dist/PaperExport-API-1.1.0.jar');
 for(const old of ['PaperExport-Paper-1.0.0.jar','PaperExport-API-1.0.0.jar','PaperExport-Paper-1.0.1.jar','PaperExport-API-1.0.1.jar','PaperExport-Paper-1.0.2.jar','PaperExport-API-1.0.2.jar'])await rm(join('dist',old),{force:true});

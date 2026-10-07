@@ -4,14 +4,14 @@ PaperExport Runtime provides a small Java API through Bukkit's service
 manager. Your plugin runs on Paper and declares `depend: [PaperExport]`.
 The API is available only while the PaperExport plugin is installed and enabled.
 
-Compile against [PaperExport-API-1.1.0.jar](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-API-1.1.0.jar)
+Compile against the [PaperExport server JAR](https://github.com/Margolem/PaperExport/releases/download/v1.1.0/PaperExport-Paper-1.1.0.jar)
 and a Paper API for your development version. Use `compileOnly` for both.
-The runtime JAR already provides the API classes on the server.
+The server JAR includes the API classes.
 
 ```kotlin
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnly(files("../dist/PaperExport-API-1.1.0.jar"))
+    compileOnly(files("../dist/PaperExport-Paper-1.1.0.jar"))
 }
 ```
 
@@ -50,8 +50,7 @@ api.registerCustomEvent(this, "demo:shockwave", (controller, id, data) -> {
 
 PaperExport never runs code from a `.paperexport` package. It calls only
 handlers your installed server plugins explicitly register. Handlers are
-removed when their owning plugin disables. See the separate
-[PaperExport Examples plugin](https://github.com/Margolem/PaperExport-Examples).
+removed when their owning plugin disables.
 
 Name a Blockbench cube `pe_hitbox` to create a region that follows its bone.
 Multiple cubes may use that name. Listen for `PaperExportHitboxEvent` to handle
